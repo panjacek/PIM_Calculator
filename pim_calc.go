@@ -6,6 +6,7 @@ import (
     "log"
     "strconv"
     "strings"
+    "flag"
 )
 
 // configuration for main calculate
@@ -46,34 +47,32 @@ func convert_arg(item string) ([]float32) {
 
 // Read cmd line args
 func read_args() (config, config) {
-    args_len := len(os.Args)
-    TX := convert_arg(os.Args[1])
-    var TX_band []float32
-    if args_len >= 3 {
-        TX_band = convert_arg(os.Args[2])
-    } else {
-        TX_band = make([]float32, len(TX))
-        for i := range(TX) {
-            TX_band[i] = 5.0
-        }
+
+    unit_test := flag.Bool("test_me", false, "flag to run selftest")
+    //TX := convert_arg(os.Args[1])
+    // TX := flag.String("tx_list", "1980,1940", "List of TXs")
+    TX_band := flag.String("tx_band", "5,5", "List of TX bands")
+    RX := flag.String("rx_list", "1900", "List of RXs")
+    RX_band := flag.String("rx_band", "5", "List of RX bands")
+
+    // Parse arguments
+    flag.Parse()
+    if *unit_test == true {
+        testme()
+        os.Exit(0)
     }
 
-    if args_len < 4 {
-        return config{TX, TX_band}, config{TX, TX_band}
-    }
+    //tx_list := convert_arg(*TX)
+    tx_list := convert_arg(flag.Args()[0])
+    tx_band := convert_arg(*TX_band)
+    rx_list := convert_arg(*RX)
+    rx_band := convert_arg(*RX_band)
 
-    RX := convert_arg(os.Args[3])
-    var RX_band []float32
-    if args_len >= 5 {
-        RX_band = convert_arg(os.Args[4])
-    } else {
-        RX_band = make([]float32, len(RX))
-        for i := range(RX) {
-            RX_band[i] = 5.0
-        }
-    }
-
-    return config{TX, TX_band}, config{RX, RX_band}
+    fmt.Println("TX_list = ", tx_list)
+    fmt.Println("TX_band = ", tx_band)
+    fmt.Println("RX_list = ", rx_list)
+    fmt.Println("RX_band = ", rx_band)
+    return config{tx_list, tx_band}, config{rx_list, rx_band}
 }
 
 
@@ -200,7 +199,6 @@ func check_rx(rx []float32, rx_band []float32, im_full [][]float32) [][]float32 
     return im_hits
 }
 
-
 // TODO: write some decent tests later...
 func testme() {
     TX := []float32{1980, 1940}
@@ -221,34 +219,27 @@ func testme() {
 
 func main() {
     print_div("-", 80)
-    fmt.Println("|\tThis is PIMC calc")
+    fmt.Println("|\tThis is PIM Calculator")
     print_div("-", 80)
-    args := os.Args[1:]
+    // args := os.Args[1:]
+    args_TX, args_RX := read_args()
 
-    if len(args) < 1 {
-        log.Printf("%v", fmt.Errorf("I need at least TX list"))
-        fmt.Println("Unit Tests")
-        testme()
-    } else {
-        args_TX, args_RX := read_args()
-        im3, im5 := calculate(args_TX.freq, args_TX.band)
+    im3, im5 := calculate(args_TX.freq, args_TX.band)
 
-        fmt.Println("I've got this IM3:\n", im3)
-        print_div("-", 80)
-        fmt.Println("I've got this IM5:\n", im5)
-        print_div("-", 80)
+    fmt.Println("I've got this IM3:\n", im3)
+    print_div("-", 80)
+    fmt.Println("I've got this IM5:\n", im5)
+    print_div("-", 80)
 
-        if len(args) > 3 {
-            im_results := check_rx(args_RX.freq, args_RX.band, im3.IM_full)
-            for i:= range(im_results) {
-                fmt.Printf("%f is affected by %f\n", im_results[i][0], im_results[i][1:])
-            }
-            print_div("-", 80)
-            im_results = check_rx(args_RX.freq, args_RX.band, im5.IM_full)
-            for i:= range(im_results) {
-                fmt.Printf("%f is affected by %f\n", im_results[i][0], im_results[i][1:])
-            }
-        }
-
+    im_results := check_rx(args_RX.freq, args_RX.band, im3.IM_full)
+    fmt.Println("------------IM3------------")
+    for i:= range(im_results) {
+        fmt.Printf("%f is affected by %f\n", im_results[i][0], im_results[i][1:])
+    }
+    print_div("-", 80)
+    fmt.Println("------------IM5------------")
+    im_results = check_rx(args_RX.freq, args_RX.band, im5.IM_full)
+    for i:= range(im_results) {
+        fmt.Printf("%f is affected by %f\n", im_results[i][0], im_results[i][1:])
     }
 }
