@@ -26,7 +26,7 @@ except ImportError:
 class PIMCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
-    def __init__(self, parent=None, width=10, height=6, dpi=100):
+    def __init__(self, parent=None, width=6, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         # self.fig, self.axes = plt.subplots()
@@ -160,6 +160,7 @@ class MainWindow(QtWidgets.QMainWindow):
     # elements
     labels = []
     fields = []
+    chk_box = []
     windows = []
 
     def __init__(self):
@@ -196,6 +197,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.main_widget = QtWidgets.QWidget(self)
 
         # Go! btn
+        self.chk_box.append(QtWidgets.QCheckBox("Plot Results"))
+        self.chk_box[-1].setChecked(False)
+        self.chk_box.append(QtWidgets.QCheckBox("Plot IM Separately"))
+        self.chk_box[-1].setChecked(False)
         calculate_btn = QtWidgets.QPushButton('Calculate', self)
         calculate_btn.setToolTip('<b>Click to calculate</b>')
         calculate_btn.resize(calculate_btn.sizeHint())
@@ -248,6 +253,8 @@ class MainWindow(QtWidgets.QMainWindow):
             yPos += 1
 
         grid.addWidget(calculate_btn, 1, 4)
+        grid.addWidget(self.chk_box[0], 2, 4)
+        grid.addWidget(self.chk_box[1], 3, 4)
 
         # Set up logging to use your widget as a handler
         # log_handler = QPlainTextEditLogger()
@@ -274,13 +281,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         return items
 
-    def show_results(self, results, im_data=None, rx_data=None):
+    def show_results(self, results, plot_results, im_data=None, rx_data=None):
         # box = QtWidgets.QMessageBox()
         items = []
         text_obj = QtWidgets.QTextBrowser(self)
         text_obj.setText(results)
         # items.append(text_obj)
-        if plt:
+        if plt and plot_results:
             for im, im_full in im_data:
                 pim_plots = PIMCanvas()
                 pim_plots.update_figure(im_full)
@@ -291,11 +298,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 pim_plots.update_figure(im_full)
                 items.append(pim_plots)
 
-        # TODO: show plots
-        for w in items:
-            # wind = PIMPlot(w)
-            # wind.show()
-            self.result_window(w)
+            for w in items:
+                # wind = PIMPlot(w)
+                # wind.show()
+                self.result_window(w)
 
         box = ScrollMessageBox(text_obj)
         box.setWindowTitle('PIM Calculator Results')
@@ -319,6 +325,8 @@ class MainWindow(QtWidgets.QMainWindow):
         rx_list = self._convert_list(self.fields[2].text())
         rx_size = self._convert_list(self.fields[3].text())
 
+        plot_results = self.chk_box[0].isChecked()
+        plot_im = self.chk_box[1].isChecked()
         pimc = PIMCalc()
 
         # get IM results
@@ -359,7 +367,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 pimc.logger.warning("{0} is inside: {1}".format(pim[0], pim[1]))
                 text_result.append("{0} is inside: {1}".format(pim[0], pim[1]))
         text_result = "\n".join(text_result)
-        self.show_results(text_result, im_data=im_result, rx_data=rx_result)
+        self.show_results(text_result, plot_results, im_data=im_result, rx_data=rx_result)
 
     def about(self):
         QtWidgets.QMessageBox.about(self, "About",
