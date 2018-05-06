@@ -1,8 +1,12 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import logging
 import pprint
 import numpy as np
+from itertools import cycle
+import argparse
+import sys
 
 
 class PIMCalc:
@@ -109,9 +113,9 @@ class PIMCalc:
             rx_bandwith = [5 for x in rx_list]
 
         if len(rx_bandwith) != len(rx_list):
-            logger.error("Lenght of rx_list != rx_bandwith!")
-            logger.warning("Assuming all of them are same as first")
-            rx_bandwith = np.array([rx_bandwith[0] for x in tx_list])
+            self.logger.error("Lenght of rx_list != rx_bandwith!")
+            self.logger.warning("Assuming all of them are same as first")
+            rx_bandwith = np.array([rx_bandwith[0] for x in rx_list])
 
         im_hits = []
         for x, x_band in zip(rx_list, rx_bandwith):
@@ -138,51 +142,6 @@ class PIMCalc:
         return im_hits
 
 
-# I DONT LIKE UNIT TESTS...
-def test_me(logger):
-    tx_list = [1840.0, 1860.0]
-    rx_list = [1820.0, 1900.0, 1910.0]
-    pim_list = pimc.calculate(tx_list)
-    logger.debug(type(pim_list))
-    assert isinstance(pim_list, tuple) is True
-
-    im3 = pim_list[0]
-    im5 = pim_list[1]
-    assert isinstance(im3, tuple) is True
-    assert isinstance(im5, tuple) is True
-
-    assert isinstance(im3[0], (np.ndarray, np.generic))
-    assert isinstance(im5[0], (np.ndarray, np.generic))
-    test_im3 = np.array([1820.0, 1840.0, 1860.0, 1880.0])
-    test_im5 = np.array([1800.0, 1820.0, 1840.0, 1860.0, 1880.0, 1900.0])
-
-    logger.debug("compare: {0} vs {1}".format(test_im3, im3[0]))
-    assert np.array_equal(test_im3, im3[0]) is True
-    assert np.array_equiv(test_im3, im3[0]) is True
-    assert np.allclose(test_im3, im3[0]) is True
-    for x, y in zip(test_im3, im3[0]):
-        print x, y
-        assert x == y
-
-    logger.debug("compare: {0} vs {1}".format(test_im5, im5[0]))
-    assert np.array_equal(test_im5, im5[0]) is True
-    assert np.array_equiv(test_im5, im5[0]) is True
-    assert np.allclose(test_im5, im5[0]) is True
-    for x, y in zip(test_im5, im5[0]):
-        print x, y
-        assert x == y
-    logger.info("IM calc Seems ok..")
-
-    im3_hits = pimc.check_rx(rx_list, im3[1])
-    im5_hits = pimc.check_rx(rx_list, im5[1])
-
-    assert len(im3_hits) > 0
-    assert len(im5_hits) > 0
-
-    logger.debug(im3_hits)
-    logger.debug(im5_hits)
-
-
 def read_args():
     """ Method to parse the given arguments
 
@@ -198,16 +157,9 @@ def read_args():
     parser.add_argument("--rx_size", dest="rx_size", help="List of RX Carriers bands [5MHz]")
     parser.add_argument("--log_lvl", dest="log_lvl",
                         help="logger level to display [INFO]", default="INFO")
-    parser.add_argument("--test_me", help="flag for self test [False]", action="store_true")
 
     # args, leftovers = parser.parse_known_args()
     args = parser.parse_args()
-
-    tx_list = None
-    if args.tx_list is None:
-        print "No TX list is given, How can I calculate PIM ?????"
-        parser.print_help()
-        raise TypeError
 
     tx_list = args.tx_list
     if "," in tx_list:
@@ -236,11 +188,7 @@ def read_args():
         else:
             rx_size = [float(x) for x in args.rx_size.strip().split(",")]
 
-    if args.test_me is not None:
-        args.log_level = "DEBUG"
-
     setup_dict = {
-            "test_me": args.test_me,
             "tx_list": tx_list,
             "tx_size": tx_size,
             "rx_list": rx_list,
@@ -250,12 +198,7 @@ def read_args():
 
     return setup_dict
 
-
-if __name__ == "__main__":
-    import sys
-    import argparse
-    from itertools import cycle
-
+def main():
     setup_dict = read_args()
 
     # setup logger
@@ -267,11 +210,6 @@ if __name__ == "__main__":
 
     logger.info("==== PIM CALCULATOR: CLI MODE ====")
     pimc = PIMCalc(logger=logger)
-
-    if setup_dict["test_me"]:
-        logger.setLevel("DEBUG")
-        test_me(logger)
-        sys.exit(0)
 
     tx_list = setup_dict["tx_list"]
     rx_list = setup_dict["rx_list"]
@@ -303,7 +241,7 @@ if __name__ == "__main__":
             logger.info(48*"=")
 
     if rx_list is None:
-        sys.exit()
+        sys.exit(0)
 
     for rx_res in rx_result:
         im_type = rx_res[0]
@@ -311,3 +249,7 @@ if __name__ == "__main__":
         for pim in rx_res[1]:
             logger.warning("{0} is inside: {1}".format(pim[0], pim[1]))
 
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()
