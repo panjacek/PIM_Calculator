@@ -104,8 +104,6 @@ func remove_duplicates(elements []float32) ([]float32){
 }
 
 func calculate(TX []float32, TX_band []float32) (im_results, im_results) {
-    fmt.Println("TX:", TX)
-    fmt.Println("TX_bands:", TX_band)
     print_div("-", 80)
 
     if len(TX_band) != len(TX) {
