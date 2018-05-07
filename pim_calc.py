@@ -3,6 +3,7 @@
 import logging
 import pprint
 import numpy as np
+from itertools import cycle
 
 
 class PIMCalc:
@@ -16,7 +17,7 @@ class PIMCalc:
         if self.logger is None:
             self.logger = logging.getLogger("test_executor")
 
-    def calculate(self, tx_list, max_order=5, tx_bandwith=None):
+    def calculate(self, tx_list, tx_bandwith=None, max_order=5):
         """ Method to calculate PIM based on list of TX carriers.
 
         Args:
@@ -137,6 +138,61 @@ class PIMCalc:
 
         return im_hits
 
+    def get_results(self, tx_list, tx_bandwith, rx_list=None, rx_bandwith=None):
+        """ Wrapper to calculate PIM and check rx hits in one go
+        Args:
+            tx_list: List of TX carriers in MHz
+            tx_bandwith: List of TX carrier Bandwidth in MHz
+            rx_list: List of RX carriers in MHz
+            rx_bandwith: List of RX carrier Bandwidth in MHz
+        Returns:
+            tuple with the following items:
+            text_result: text results are produced by the script
+            pim_result: tuple with IM name and intermodulation ranges
+            rx_result: tuple with IM name and RX hits
+        """
+
+        im_result = self.calculate(tx_list, tx_bandwith)
+        text_result = []
+        im_name = cycle(["IM3", "IM5"]).next
+
+        pim_result = []
+        rx_result = []
+        for im, im_full in im_result:
+            name = im_name()
+            self.logger.info(48*"=")
+            self.logger.info(im)
+            self.logger.info("==== {0}:fmin, fmax ====".format(name))
+            self.logger.info(im_full)
+            self.logger.info(48*"=")
+            text_result.append(48*"=")
+            text_result.append("==== {0} ====".format(name))
+            text_result.append(str(im))
+            text_result.append("==== {0}:fmin, fmax ====".format(name))
+            text_result.append(str(im_full))
+            text_result.append(48*"=")
+
+            pim_result.append((name, im_full))
+            if rx_list is not None:
+                self.logger.info("==== RX check ===")
+                im_hits = self.check_rx(rx_list, im_full, rx_bandwith)
+                if len(im_hits) > 0:
+                    self.logger.warning("yey, we've got some {0} PIM".format(name))
+                rx_result.append(("{} RX".format(name), im_hits))
+                text_result.append(48*"=")
+                self.logger.info(48*"=")
+
+        for rx_res in rx_result:
+            im_type = rx_res[0]
+            self.logger.warning("===== {0} =====".format(im_type))
+            text_result.append("===== {0} =====".format(im_type))
+            for pim in rx_res[1]:
+                self.logger.warning("{0} is inside: {1}".format(pim[0], pim[1]))
+                text_result.append("{0} is inside: {1}".format(pim[0], pim[1]))
+
+        return text_result, pim_result, rx_result
+
+
 
 # I DONT LIKE UNIT TESTS...
 def test_me(logger):
@@ -254,7 +310,6 @@ def read_args():
 if __name__ == "__main__":
     import sys
     import argparse
-    from itertools import cycle
 
     setup_dict = read_args()
 

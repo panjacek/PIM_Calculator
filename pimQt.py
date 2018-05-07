@@ -17,7 +17,7 @@ try:
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
     import numpy as np
-    import scipy.stats as stats
+    from scipy.interpolate import interp1d, spline
 except ImportError:
     print "no plotting.. :/"
     raise
@@ -44,7 +44,6 @@ class PIMCanvas(FigureCanvas):
     def compute_initial_figure(self):
         plt.style.use('bmh')
 
-
 	def plot_beta_hist(ax, a, b):
             from numpy.random import beta
             ax.hist(beta(a, b, size=10000), histtype="stepfilled",
@@ -60,27 +59,51 @@ class PIMCanvas(FigureCanvas):
         ax.set_title("'bmh' style sheet")
         # plt.show()
 
-    def update_figure(self, data):
+    def update_figure(self, data, plot_name=""):
         self.axes.cla()
-        # TODO: clean 
-        shape_im = np.array([0.2, 0.4, 0.50, 0.55, 0.6, 0.6, 0.55, 0.50, 0.4, 0.2])
-        if isinstance(data[0], tuple):
+        self.axes.set_title(plot_name)
+        self.axes.set_ylabel("Power Normalized")
+        self.axes.set_xlabel("Frequency [MHz]")
+
+        # Shapes: 
+        shape_im = np.array([0.2, 0.4, 0.50, 0.55, 0.58, 0.6,
+                             0.6, 0.6, 0.6,
+                             0.6, 0.58, 0.55, 0.50, 0.4, 0.2])
+
+        shape_crr = np.array([0.2, 0.5, 0.9, 0.99,
+                              1, 1, 1, 1, 1, 1, 1,
+                              0.99, 0.9, 0.5,  0.2])
+        # plot RX vs IM
+        # if isinstance(data[0], tuple):
+        if "RX" in plot_name:
             rx_present = []
             for rx, im_hits in data:
-                x = np.arange(im_hits[0], im_hits[1])
+                # x = np.arange(im_hits[0], im_hits[1])
+                x = np.linspace(im_hits[0], im_hits[1], num=15)
                 x_cf = im_hits[0] + (im_hits[1] - im_hits[0]) / 2
+
                 # make pseudo PIM shape with edges lower than middle
                 y = np.outer(shape_im, np.ones(len(x))).ravel()
                 y = y[::len(y)/len(x)]
-                # y = 0.6*np.ones(len(x))
+                x2 = np.linspace(x.min(), x.max(), num=124)
+                y = spline(x, y, x2)
 
-                self.axes.bar(x, y,
+                self.axes.plot(x2, y,
                               label="IM Cf={0}".format(x_cf), alpha=0.60,
                               lw="3")
+
                 rx_cf = rx[0] + (rx[1] - rx[0]) / 2
                 if rx_cf not in rx_present:
-                    rx = np.arange(rx[0], rx[1])
-                    self.axes.bar(rx, np.ones(len(rx)),
+                    # rx = np.arange(rx[0], rx[1])
+                    rx = np.linspace(rx[0]-0.1, rx[1]+0.1, num=15)
+
+                    # make pseudo PIM shape with edges lower than middle
+                    y = np.outer(shape_crr, np.ones(len(rx))).ravel()
+                    y = y[::len(y)/len(rx)]
+                    rx2 = np.linspace(rx.min(), rx.max(), num=124)
+                    y = spline(rx, y, rx2, order=2)
+
+                    self.axes.plot(rx2, y,
                                   label="RX Cf={0}".format(rx_cf), alpha=0.8,
                                   lw="3")
                     rx_present.append(rx_cf)
@@ -88,39 +111,29 @@ class PIMCanvas(FigureCanvas):
             self.draw()
             return
 
-        data = [np.arange(x[0], x[1], 0.1) for x in data]
+        # Plot IM items
+        # data = [np.arange(x[0], x[1]) for x in data]
+        # data = [np.arange(x[0], x[1]) for x in data]
         # y = [np.ones(len(x)) for x in data]
-        poi = stats.poisson
-        lambda_ = [1.5, 4.25]
-        colours = ["#348ABD", "#A60628"]
-        for x in data:
-            # self.axes.bar(x, y.pop(), alpha=0.6, lw="3")
-            y = np.ones(len(x))
-            self.axes.bar(x, y,
-                          label="Cf={0}".format(x[0]+(x[-1]-x[0])/2),
-                          # alpha=0.60,
+        for pim in data:
+            x = np.linspace(pim[0], pim[1], num=15, endpoint=True)
+            x_cf = pim[0] + (pim[1] - pim[0]) / 2
+            y = np.outer(shape_im, np.ones(len(x))).ravel()
+            y = y[::len(y)/len(x)]
+            x2 = np.linspace(x.min(), x.max(), num=124)
+            y = spline(x, y, x2)
+
+            self.axes.plot(x2, y,
+                          label="IM Cf={0}".format(x_cf), alpha=0.60,
                           lw="3")
-        # self.axes.plot(data, y, alpha=0.8)
-        # self.axes.hist(data, histtype="stepfilled", bins=100, alpha=0.8, density=True)
-        """y_pos = np.ar
-        self.axes.barh(np.arange(, data, align='center', alpha=0.8,
-                       ecolor='black')
-    def newwindow(self):
-        self.wid = QtGui.QWidget()
-        self.wid.resize(250, 150)
-        self.wid.setWindowTitle('NewWindow')
-        self.wid.show()
-        self.wid = QtGui.QWidget()
-        self.wid.resize(250, 150)
-        self.wid.setWindowTitle('NewWindow')
-        self.wid.show()
-        """
+            """self.axes.bar(x, y,
+                          label="Cf={0}".format(x[0]+(x[-1]-x[0])/2),
+                          alpha=0.60,
+                          lw="3")
+            """
+            # self.axes.plot(x, y, alpha=0.8, lw="3")
         # self.xticks(a + 0.4, a)
         self.axes.legend()
-        # self.fig.ylabel("Power")
-        # self.axes.xlabel("Frequency [MHz]")
-        # self.axes.title("Probability mass function of a Poisson random variable; differing \
-        #         $\lambda$ values");
         self.draw()
 
 
@@ -177,11 +190,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.fileQuit()
 
     def initUI(self):
-        self.setWindowTitle('-- PIM Calculator --')
 
         # MENUS
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.setWindowTitle("application main window")
+        self.setWindowTitle('-- PIM Calculator --')
 
         self.file_menu = QtWidgets.QMenu('&File', self)
         self.file_menu.addAction('&Quit', self.fileQuit,
@@ -281,27 +293,28 @@ class MainWindow(QtWidgets.QMainWindow):
 
         return items
 
-    def show_results(self, results, plot_results, im_data=None, rx_data=None):
+    def show_results(self, results, plot_results, plot_im, im_data=None, rx_data=None):
         # box = QtWidgets.QMessageBox()
         items = []
         text_obj = QtWidgets.QTextBrowser(self)
         text_obj.setText(results)
         # items.append(text_obj)
         if plt and plot_results:
-            for im, im_full in im_data:
-                pim_plots = PIMCanvas()
-                pim_plots.update_figure(im_full)
-                items.append(pim_plots)
+            if plot_im:
+                for im, im_full in im_data:
+                    pim_plots = PIMCanvas()
+                    pim_plots.update_figure(im_full, plot_name=im)
+                    items.append([im, pim_plots])
 
             for im, im_full in rx_data:
                 pim_plots = PIMCanvas()
-                pim_plots.update_figure(im_full)
-                items.append(pim_plots)
+                # call the plots only if there is something to show
+                if len(im_full) > 0:
+                    pim_plots.update_figure(im_full, plot_name=im)
+                    items.append([im, pim_plots])
 
             for w in items:
-                # wind = PIMPlot(w)
-                # wind.show()
-                self.result_window(w)
+                self.result_window(w[1], item_name=w[0])
 
         box = ScrollMessageBox(text_obj)
         box.setWindowTitle('PIM Calculator Results')
@@ -311,8 +324,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.w.show()
 
     def result_window(self, item, item_name="Results"):
-        # QtGui.QWidget()
-        # self.wid.resize(250, 150)
         item.setWindowTitle(item_name)
         item.show()
         self.windows.append(item)
@@ -321,15 +332,18 @@ class MainWindow(QtWidgets.QMainWindow):
         """ Method to call on calculate click """
 
         tx_list = self._convert_list(self.fields[0].text())
-        tx_size = self._convert_list(self.fields[1].text())
+        tx_bandwith = self._convert_list(self.fields[1].text())
         rx_list = self._convert_list(self.fields[2].text())
-        rx_size = self._convert_list(self.fields[3].text())
+        rx_bandwith = self._convert_list(self.fields[3].text())
 
         plot_results = self.chk_box[0].isChecked()
         plot_im = self.chk_box[1].isChecked()
         pimc = PIMCalc()
 
         # get IM results
+        text_result, im_result, rx_result = pimc.get_results(tx_list, tx_bandwith, rx_list, rx_bandwith)
+
+        """
         im_result = pimc.calculate(tx_list, tx_bandwith=tx_size)
         text_result = []
         im_name = cycle(["IM3", "IM5"]).next
@@ -356,9 +370,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 text_result.append(48*"=")
                 pimc.logger.info(48*"=")
 
-        if rx_list is None:
-            sys.exit()
-
         for rx_res in rx_result:
             im_type = rx_res[0]
             pimc.logger.warning("===== {0} =====".format(im_type))
@@ -366,8 +377,9 @@ class MainWindow(QtWidgets.QMainWindow):
             for pim in rx_res[1]:
                 pimc.logger.warning("{0} is inside: {1}".format(pim[0], pim[1]))
                 text_result.append("{0} is inside: {1}".format(pim[0], pim[1]))
+        """
         text_result = "\n".join(text_result)
-        self.show_results(text_result, plot_results, im_data=im_result, rx_data=rx_result)
+        self.show_results(text_result, plot_results, plot_im, im_data=im_result, rx_data=rx_result)
 
     def about(self):
         QtWidgets.QMessageBox.about(self, "About",
