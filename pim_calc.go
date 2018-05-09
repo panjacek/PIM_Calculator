@@ -183,10 +183,10 @@ func check_rx(rx []float32, rx_band []float32, im_full [][]float32) [][]float32 
         for im := range(im_full) {
             hits := 0
             pim := []float32{im_full[im][0], im_full[im][1]}
-            if im_full[im][0] <= rx_min && rx_min <= im_full[im][1] {
+            if rx_min <= im_full[im][0] && im_full[im][0] <= rx_max {
                 hits++
             }
-            if im_full[im][0] <= rx_max && rx_max <= im_full[im][1] {
+            if rx_min <= im_full[im][1] && im_full[im][1] <= rx_max {
                 hits++
             }
             if hits > 0 {

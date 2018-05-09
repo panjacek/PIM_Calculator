@@ -96,10 +96,10 @@ class PIMCalc:
     def _clean_arrays(self, im, im_full):
         # logger.error(im)
         im_full = im_full[im_full[:, 0].argsort()]
-        # logger.debug("IM_FULL:{0}".format(pprint.pformat(im_full)))
+        self.logger.debug("IM_FULL:{0}".format(pprint.pformat(im_full)))
         # logger.debug("sorting...")
         # logger.debug(im)
-        im = np.sort(np.unique(im))
+        # im = np.sort(np.unique(im))
         im_full = np.unique(im_full, axis=0)
         # logger.warning(len(im))
         # logger.debug(im)
@@ -127,9 +127,9 @@ class PIMCalc:
             for pim in pim_list:
                 hit = 0
                 self.logger.debug(pim)
-                if pim[0] <= rx_min <= pim[1]:
+                if rx_min <= pim[0] <= rx_max:
                     hit += 1
-                if pim[0] <= rx_max <= pim[1]:
+                if rx_min <= pim[1] <= rx_max:
                     hit += 1
 
                 if hit > 0:
