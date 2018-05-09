@@ -99,7 +99,7 @@ class PIMCalc:
         self.logger.debug("IM_FULL:{0}".format(pprint.pformat(im_full)))
         # logger.debug("sorting...")
         # logger.debug(im)
-        # im = np.sort(np.unique(im))
+        im = np.sort(np.unique(im))
         im_full = np.unique(im_full, axis=0)
         # logger.warning(len(im))
         # logger.debug(im)
@@ -127,15 +127,19 @@ class PIMCalc:
             for pim in pim_list:
                 hit = 0
                 self.logger.debug(pim)
+                # check fully inside
                 if rx_min <= pim[0] <= rx_max:
                     hit += 1
                 if rx_min <= pim[1] <= rx_max:
+                    hit += 1
+                # check covering from outside fully 
+                if pim[0] <= rx_min and pim[1] >= rx_max:
                     hit += 1
 
                 if hit > 0:
                     msg = "RX{0} is affected by {1}".format(rx_wide, pim)
                     im_hits.append((rx_wide, pim))
-                    if hit == 2:
+                    if hit > 1:
                         msg = "".join([msg, " - RX fully covered by PIM"])
                     self.logger.debug(msg)
 

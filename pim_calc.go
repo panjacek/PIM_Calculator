@@ -183,10 +183,15 @@ func check_rx(rx []float32, rx_band []float32, im_full [][]float32) [][]float32 
         for im := range(im_full) {
             hits := 0
             pim := []float32{im_full[im][0], im_full[im][1]}
+            // Check if edge is inside RX
             if rx_min <= im_full[im][0] && im_full[im][0] <= rx_max {
                 hits++
             }
             if rx_min <= im_full[im][1] && im_full[im][1] <= rx_max {
+                hits++
+            }
+            // Check if PIM edge is outside of RX but fully covering it
+            if im_full[im][0] <= rx_min && im_full[im][1] >= rx_max {
                 hits++
             }
             if hits > 0 {
