@@ -31,6 +31,9 @@ class PIMCalc:
         """
         logger = self.logger
 
+        if tx_list is None or len(tx_list) < 1:
+            raise TypeError
+
         # set default bandwith to 5MHz (LTE5)
         if tx_bandwith is None:
             tx_bandwith = np.array([5 for x in tx_list])
@@ -73,24 +76,27 @@ class PIMCalc:
                                     im3_band +
                                     tx_bandwith[l] +
                                     tx_bandwith[m])
+                            im_order_cnt = 5
 
         im3_full = np.empty(shape=[len(im3), 2])
         im5_full = np.empty(shape=[len(im5), 2])
         # IM min and max array, IM5 will always be longer..
-        im_full_enum = range(0, len(im5)) if len(im5) != 0 else len(im3)
+        im_full_enum = range(0, len(im5)) if len(im5) != 0 else range(0, len(im3))
         # IM f0 - band, f0 + band
         for i in im_full_enum:
             if i < len(im3):
                 im_tmp = [im3[i] - im3_band[i]/2.0, im3[i] + im3_band[i]/2.0]
                 # logger.info(im_tmp)
                 im3_full[i] = im_tmp
-            if max_order == 5:
+            if max_order >= 5:
                 im_tmp = [im5[i] - im5_band[i]/2.0, im5[i] + im5_band[i]/2.0]
                 # logger.info(im_tmp)
                 im5_full[i] = im_tmp
 
         im3, im3_full = self._clean_arrays(im3, im3_full)
-        im5, im5_full = self._clean_arrays(im5, im5_full)
+        if max_order >=5:
+            im5, im5_full = self._clean_arrays(im5, im5_full)
+
         return (im3, im3_full), (im5, im5_full)
 
     def _clean_arrays(self, im, im_full):
@@ -280,35 +286,11 @@ def main():
     logger.info("Using RX Carriers:{0}".format(tx_size))
     logger.info("Using RX Carriers:{0}".format(rx_list))
     logger.info("Using RX Carriers:{0}".format(rx_size))
-
-    im_name = cycle(["IM3", "IM5"]).next
-    im_result = pimc.calculate(tx_list, tx_bandwith=tx_size)
-    rx_result = []
-    for im, im_full in im_result:
-        logger.info(48*"=")
-        name = im_name()
-        logger.info("==== {0} ====".format(name))
-        logger.info(im)
-        logger.info("==== {0}:fmin, fmax ====".format(name))
-        logger.info(im_full)
-        logger.info(48*"=")
-        if rx_list is not None:
-            logger.info("==== RX check ===")
-            im_hits = pimc.check_rx(rx_list, im_full, rx_bandwith=rx_size)
-            if len(im_hits) > 0:
-                logger.warning("yey, we've got some {0} PIM".format(name))
-            rx_result.append((name, im_hits))
-            logger.info(48*"=")
-
-    if rx_list is None:
-        sys.exit(0)
-
-    for rx_res in rx_result:
-        im_type = rx_res[0]
-        logger.warning("===== {0} =====".format(im_type))
-        for pim in rx_res[1]:
-            logger.warning("{0} is inside: {1}".format(pim[0], pim[1]))
-
+    
+    text_result, im_result, rx_result = pimc.get_results(tx_list,
+                                                         tx_size,
+                                                         rx_list,
+                                                         rx_size)
     sys.exit(0)
 
 if __name__ == "__main__":
