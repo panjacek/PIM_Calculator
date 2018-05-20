@@ -1,7 +1,7 @@
-package main
+package PIM_Calculator
 
 import (
-    "os"
+    //"os"
     "fmt"
     "log"
     "strconv"
@@ -48,7 +48,7 @@ func convert_arg(item string) ([]float32) {
 // Read cmd line args
 func read_args() (config, config) {
 
-    unit_test := flag.Bool("test_me", false, "flag to run selftest")
+    // unit_test := flag.Bool("test_me", false, "flag to run selftest")
     //TX := convert_arg(os.Args[1])
     // TX := flag.String("tx_list", "1980,1940", "List of TXs")
     TX_band := flag.String("tx_band", "5,5", "List of TX bands")
@@ -57,11 +57,11 @@ func read_args() (config, config) {
 
     // Parse arguments
     flag.Parse()
-    if *unit_test == true {
+    /* if *unit_test == true {
         testme()
         os.Exit(0)
     }
-
+    */
     //tx_list := convert_arg(*TX)
     tx_list := convert_arg(flag.Args()[0])
     tx_band := convert_arg(*TX_band)
@@ -103,11 +103,9 @@ func remove_duplicates(elements []float32) ([]float32){
     return result
 }
 
-func calculate(TX []float32, TX_band []float32) (im_results, im_results) {
-    print_div("-", 80)
-
+func Calculate(TX []float32, TX_band []float32) (im_results, im_results) {
     if len(TX_band) != len(TX) {
-        log.Printf("%v", fmt.Errorf("SHIT HAPPENED"))
+        log.Printf("%v", fmt.Errorf("TX band size is not equal TXs"))
         panic("")
     }
 
@@ -168,14 +166,13 @@ func calculate(TX []float32, TX_band []float32) (im_results, im_results) {
             IM5_full = append(IM5_full, im_tmp...)
         }
     }
-    print_div("-", 80)
     // fmt.Println(IM3_full)
     // fmt.Println(IM5_full)
 
     return im_results{IM3, IM3_full}, im_results{IM5, IM5_full}
 }
 
-func check_rx(rx []float32, rx_band []float32, im_full [][]float32) [][]float32 {
+func CheckRX(rx []float32, rx_band []float32, im_full [][]float32) [][]float32 {
     im_hits := make([][]float32, 0)
     for i := range(rx) {
         rx_min := rx[i] - rx_band[i]/2
@@ -194,6 +191,7 @@ func check_rx(rx []float32, rx_band []float32, im_full [][]float32) [][]float32 
             if im_full[im][0] <= rx_min && im_full[im][1] >= rx_max {
                 hits++
             }
+
             if hits > 0 {
                 im_hits = append(im_hits, []float32{rx[i], pim[0], pim[1]})
             }
@@ -202,22 +200,8 @@ func check_rx(rx []float32, rx_band []float32, im_full [][]float32) [][]float32 
     return im_hits
 }
 
-// TODO: write some decent tests later...
-func testme() {
-    TX := []float32{1980, 1940}
-    TX_band := []float32{5, 5}
-    im3, im5 := calculate(TX, TX_band)
-
-    fmt.Println("I've got this:\n", im3)
-    fmt.Println("I've got this:\n", im5)
-
-
-    TX = []float32{1980, 1940, 1950, 1960, 2000}
-    TX_band = []float32{5, 5, 5, 5, 5}
-    im3, im5 = calculate(TX, TX_band)
-
-    fmt.Println("I've got this:\n", im3)
-    fmt.Println("I've got this:\n", im5)
+func PIM_Calculator() {
+    main()
 }
 
 func main() {
@@ -227,21 +211,21 @@ func main() {
     // args := os.Args[1:]
     args_TX, args_RX := read_args()
 
-    im3, im5 := calculate(args_TX.freq, args_TX.band)
+    im3, im5 := Calculate(args_TX.freq, args_TX.band)
 
     fmt.Println("I've got this IM3:\n", im3)
     print_div("-", 80)
     fmt.Println("I've got this IM5:\n", im5)
     print_div("-", 80)
 
-    im_results := check_rx(args_RX.freq, args_RX.band, im3.IM_full)
+    im_results := CheckRX(args_RX.freq, args_RX.band, im3.IM_full)
     fmt.Println("------------IM3------------")
     for i:= range(im_results) {
         fmt.Printf("%f is affected by %f\n", im_results[i][0], im_results[i][1:])
     }
     print_div("-", 80)
     fmt.Println("------------IM5------------")
-    im_results = check_rx(args_RX.freq, args_RX.band, im5.IM_full)
+    im_results = CheckRX(args_RX.freq, args_RX.band, im5.IM_full)
     for i:= range(im_results) {
         fmt.Printf("%f is affected by %f\n", im_results[i][0], im_results[i][1:])
     }
