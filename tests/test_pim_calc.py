@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from __future__ import print_function
 from pim_calc import PIMCalc
 from pim_calc import main
 import pytest
@@ -64,7 +64,7 @@ def test_calculate(pimc):
     rx_list = [1820.0, 1900.0, 1910.0]
     
     pim_list = pimc.calculate(tx_list)
-    print type(pim_list)
+    print(type(pim_list))
     assert isinstance(pim_list, tuple) is True
 
     im3 = pim_list[0]
@@ -77,12 +77,12 @@ def test_calculate(pimc):
     test_im3 = np.array([1820.0, 1840.0, 1860.0, 1880.0])
     test_im5 = np.array([1800.0, 1820.0, 1840.0, 1860.0, 1880.0, 1900.0])
 
-    print "compare: {0} vs {1}".format(test_im3, im3[0])
+    print("compare: {0} vs {1}".format(test_im3, im3[0]))
     assert np.array_equal(test_im3, im3[0]) is True
     assert np.array_equiv(test_im3, im3[0]) is True
     assert np.allclose(test_im3, im3[0]) is True
     for x, y in zip(test_im3, im3[0]):
-        print x, y
+        print(x, y)
         assert x == y
 
     print("compare: {0} vs {1}".format(test_im5, im5[0]))
@@ -90,7 +90,7 @@ def test_calculate(pimc):
     assert np.array_equiv(test_im5, im5[0]) is True
     assert np.allclose(test_im5, im5[0]) is True
     for x, y in zip(test_im5, im5[0]):
-        print x, y
+        print(x, y)
         assert x == y
     print("IM calc Seems ok..")
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from __future__ import print_function
 from __future__ import unicode_literals
 import sys
-# from PySide2.QtWidgets import QApplication, QWidget, QLabel, QPushButton
 from PySide2 import QtWidgets, QtCore
 from pim_calc import PIMCalc
 import logging
@@ -17,25 +18,22 @@ try:
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
     import numpy as np
+    from numpy.random import beta
     from scipy.interpolate import interp1d, spline
 except ImportError:
-    print "no plotting.. :/"
+    print("no plotting.. :/")
     raise
 
 
 class PIMCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
-
     def __init__(self, parent=None, width=6, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         # self.fig, self.axes = plt.subplots()
-
         self.compute_initial_figure()
-
         FigureCanvas.__init__(self, fig)
         self.setParent(parent)
-
         FigureCanvas.setSizePolicy(self,
                                    QtWidgets.QSizePolicy.Expanding,
                                    QtWidgets.QSizePolicy.Expanding)
@@ -43,13 +41,9 @@ class PIMCanvas(FigureCanvas):
 
     def compute_initial_figure(self):
         plt.style.use('bmh')
-
-	def plot_beta_hist(ax, a, b):
-            from numpy.random import beta
+        def plot_beta_hist(ax, a, b):
             ax.hist(beta(a, b, size=10000), histtype="stepfilled",
             bins=25, alpha=0.8, density=True)
-
-
         ax = self.axes
         # fig, ax = plt.subplots()
         plot_beta_hist(ax, 10, 10)
@@ -78,7 +72,6 @@ class PIMCanvas(FigureCanvas):
         if "RX" in plot_name:
             rx_present = []
             for rx, im_hits in data:
-                # x = np.arange(im_hits[0], im_hits[1])
                 x = np.linspace(im_hits[0], im_hits[1], num=15)
                 x_cf = im_hits[0] + (im_hits[1] - im_hits[0]) / 2
 
@@ -94,9 +87,7 @@ class PIMCanvas(FigureCanvas):
 
                 rx_cf = rx[0] + (rx[1] - rx[0]) / 2
                 if rx_cf not in rx_present:
-                    # rx = np.arange(rx[0], rx[1])
                     rx = np.linspace(rx[0]-0.1, rx[1]+0.1, num=15)
-
                     # make pseudo PIM shape with edges lower than middle
                     y = np.outer(shape_crr, np.ones(len(rx))).ravel()
                     y = y[::len(y)/len(rx)]
@@ -112,9 +103,6 @@ class PIMCanvas(FigureCanvas):
             return
 
         # Plot IM items
-        # data = [np.arange(x[0], x[1]) for x in data]
-        # data = [np.arange(x[0], x[1]) for x in data]
-        # y = [np.ones(len(x)) for x in data]
         for pim in data:
             x = np.linspace(pim[0], pim[1], num=15, endpoint=True)
             x_cf = pim[0] + (pim[1] - pim[0]) / 2
@@ -126,13 +114,6 @@ class PIMCanvas(FigureCanvas):
             self.axes.plot(x2, y,
                           label="IM Cf={0}".format(x_cf), alpha=0.60,
                           lw="3")
-            """self.axes.bar(x, y,
-                          label="Cf={0}".format(x[0]+(x[-1]-x[0])/2),
-                          alpha=0.60,
-                          lw="3")
-            """
-            # self.axes.plot(x, y, alpha=0.8, lw="3")
-        # self.xticks(a + 0.4, a)
         self.axes.legend()
         self.draw()
 
@@ -148,10 +129,8 @@ class PIMPlot(QtWidgets.QWidget):
 
 
 class ScrollMessageBox(QtWidgets.QMessageBox):
-
     def __init__(self, widgets, *args, **kwargs):
         QtWidgets.QMessageBox.__init__(self, *args, **kwargs)
-
         scroll = QtWidgets.QScrollArea(self)
         scroll.setWidgetResizable(True)
         scroll.setGeometry(100,100,100,100)
@@ -177,8 +156,8 @@ class MainWindow(QtWidgets.QMainWindow):
     windows = []
 
     def __init__(self):
-        QtWidgets.QMainWindow.__init__(self)
-        # super(MainWindow, self).__init__()
+        super(MainWindow, self).__init__()
+        self.logger = logging.getLogger("pimQt")
         self.initUI()
 
     def fileQuit(self):
@@ -190,7 +169,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.fileQuit()
 
     def initUI(self):
-
         # MENUS
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle('-- PIM Calculator --')
@@ -218,9 +196,6 @@ class MainWindow(QtWidgets.QMainWindow):
         calculate_btn.resize(calculate_btn.sizeHint())
         calculate_btn.clicked.connect(self.on_calculate_click)
 
-        # validators
-        # validator_number = QtGui.QIntValidator(0,1, self)
-
         # Labels and text forms
         self.labels.append(QtWidgets.QLabel("<b>TX Carriers</b>", self))
         self.labels.append(QtWidgets.QLabel("Frequency [MHz]", self))
@@ -233,10 +208,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.fields.append(QtWidgets.QLineEdit("5,5", self))
         self.fields.append(QtWidgets.QLineEdit("1900,1880", self))
         self.fields.append(QtWidgets.QLineEdit("5,5", self))
-
-        # set validators later..
-        # for field in self.fields:
-        #    field.setValidator(validator_number)
 
         # Grid
         grid_main = QtWidgets.QGridLayout(self.main_widget)
@@ -281,11 +252,10 @@ class MainWindow(QtWidgets.QMainWindow):
     @staticmethod
     def _convert_list(items):
         """ Convert string params into lists """
-
         if not isinstance(items, str):
             items = str(items)
 
-        print items
+        print(items)
         if "," in items:
             items = [float(x) for x in items.strip().split(",")]
         else:
@@ -342,57 +312,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # get IM results
         text_result, im_result, rx_result = pimc.get_results(tx_list, tx_bandwith, rx_list, rx_bandwith)
-
-        """
-        im_result = pimc.calculate(tx_list, tx_bandwith=tx_size)
-        text_result = []
-        im_name = cycle(["IM3", "IM5"]).next
-        rx_result = []
-        for im, im_full in im_result:
-            name = im_name()
-            pimc.logger.info(48*"=")
-            pimc.logger.info(im)
-            pimc.logger.info("==== {0}:fmin, fmax ====".format(name))
-            pimc.logger.info(im_full)
-            pimc.logger.info(48*"=")
-            text_result.append(48*"=")
-            text_result.append("==== {0} ====".format(name))
-            text_result.append(str(im))
-            text_result.append("==== {0}:fmin, fmax ====".format(name))
-            text_result.append(str(im_full))
-            text_result.append(48*"=")
-            if rx_list is not None:
-                pimc.logger.info("==== RX check ===")
-                im_hits = pimc.check_rx(rx_list, im_full, rx_bandwith=rx_size)
-                if len(im_hits) > 0:
-                    pimc.logger.warning("yey, we've got some {0} PIM".format(name))
-                rx_result.append((name, im_hits))
-                text_result.append(48*"=")
-                pimc.logger.info(48*"=")
-
-        for rx_res in rx_result:
-            im_type = rx_res[0]
-            pimc.logger.warning("===== {0} =====".format(im_type))
-            text_result.append("===== {0} =====".format(im_type))
-            for pim in rx_res[1]:
-                pimc.logger.warning("{0} is inside: {1}".format(pim[0], pim[1]))
-                text_result.append("{0} is inside: {1}".format(pim[0], pim[1]))
-        """
         text_result = "\n".join(text_result)
         self.show_results(text_result, plot_results, plot_im, im_data=im_result, rx_data=rx_result)
 
     def about(self):
         QtWidgets.QMessageBox.about(self, "About",
                                     """PIM Calculator
-This program is a simple GUI hello world of a Qt5 application embedding matplotlib canvases.
-
-"""                                )
+This program is a simple GUI RF Passive Intermodulation Calculator """)
 
 
 class QPlainTextEditLogger(logging.Handler):
     def __init__(self, parent):
         super().__init__()
-
         self.widget = QtWidgets.QPlainTextEdit(parent)
         self.widget.setReadOnly(True)
 
@@ -404,11 +335,11 @@ class QPlainTextEditLogger(logging.Handler):
         pass
 
 
-if __name__ == "__main__":
+def main():
     # setup logger
     console = logging.StreamHandler()
     console.setLevel("DEBUG")
-    logger = logging.getLogger("test_executor")
+    logger = logging.getLogger("pimQt")
     logger.addHandler(console)
     logger.setLevel("DEBUG")
 
@@ -420,3 +351,6 @@ if __name__ == "__main__":
     main = MainWindow()
     # Ensure the execution stops correctly
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    main()
