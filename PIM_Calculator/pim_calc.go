@@ -47,21 +47,12 @@ func convert_arg(item string) ([]float32) {
 
 // Read cmd line args
 func read_args() (config, config) {
-
-    // unit_test := flag.Bool("test_me", false, "flag to run selftest")
-    //TX := convert_arg(os.Args[1])
-    // TX := flag.String("tx_list", "1980,1940", "List of TXs")
     TX_band := flag.String("tx_band", "5,5", "List of TX bands")
     RX := flag.String("rx_list", "1900", "List of RXs")
     RX_band := flag.String("rx_band", "5", "List of RX bands")
 
     // Parse arguments
     flag.Parse()
-    /* if *unit_test == true {
-        testme()
-        os.Exit(0)
-    }
-    */
     //tx_list := convert_arg(*TX)
     tx_list := convert_arg(flag.Args()[0])
     tx_band := convert_arg(*TX_band)
@@ -105,7 +96,7 @@ func remove_duplicates(elements []float32) ([]float32){
 
 func Calculate(TX []float32, TX_band []float32) (im_results, im_results) {
     if len(TX_band) != len(TX) {
-        log.Printf("%v", fmt.Errorf("TX band size is not equal TXs"))
+        log.Printf("%v", fmt.Errorf("Error, TX band list must equal TX freq list"))
         panic("")
     }
 

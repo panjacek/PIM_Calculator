@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import print_function
 import logging
 import pprint
 import numpy as np
 from itertools import cycle
+from copy import deepcopy
 import argparse
 import sys
 
@@ -14,11 +14,26 @@ class PIMCalc:
     logger = None
 
     def __init__(self, **kwargs):
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
         if self.logger is None:
-            self.logger = logging.getLogger("test_executor")
+            self.logger = logging.getLogger(__name__)
+
+    def get_im_full(self, cf, pim_size):
+        """ Get full size if PIM """
+        return [cf - pim_size/2.0, cf + pim_size/2.0]
+
+    def get_im(self, tx_list):
+        """ Calculate Center Frequency of intermodulation from given frequencies
+        Args:
+            tx_list: list of frequencies
+        return:
+            result of IM3 or IM5 calculation based on lenght of tx_list"""
+        if len(tx_list) == 3:
+            return tx_list[0] + tx_list[1] - tx_list[2]
+        if len(tx_list) == 5:
+            return tx_list[0] + tx_list[1] + tx_list[2] - tx_list[3] - tx_list[4]
 
     def calculate(self, tx_list, tx_bandwith=None, max_order=5):
         """ Method to calculate PIM based on list of TX carriers.
@@ -43,73 +58,82 @@ class PIMCalc:
             logger.warning("Assuming all of them are same as first")
             tx_bandwith = np.array([tx_bandwith[0] for x in tx_list])
 
-        tx_enum = range(0, len(tx_list))
-
         # initialize numpy arrays
-        im3 = np.array([])
-        im5 = np.array([])
-        im3_band = np.array([])
-        im5_band = np.array([])
+        im3 = np.zeros(shape=[len(tx_list)**3],
+                       dtype=([("IM", float),
+                       ("IM_COMP", float, (3,)), ("IM_FULL", float, (2,))]))
+        im5 = np.zeros(shape=[len(tx_list)**5],
+                       dtype=([("IM", float), ("IM_COMP", float, (5,)),
+                       ("IM_FULL", float, (2,))]))
+        im3_cnt = 0
+        im5_cnt = 0
 
         # IM center freq calc
-        for i in tx_enum:
+        for i in range(0, len(tx_list)):
             im_order_cnt = 1
-            for j in tx_enum:
-                for k in tx_enum:
+            for j in range(i, len(tx_list)):
+                for k in range(0, len(tx_list)):
                     im_order_cnt = 3
-                    im3 = np.append(im3, tx_list[i] + tx_list[j] - tx_list[k])
-                    im3_band_tmp = tx_bandwith[i] + tx_bandwith[j] + tx_bandwith[k]
-                    im3_band = np.append(im3_band, im3_band_tmp)
+                    im3_band_tmp = sum([tx_bandwith[x] for x in [i, j, k]])
+                    tx_items = [tx_list[x] for x in [i, j, k]]
+                    if len(np.unique(tx_items)) > 0:
+                        im3_comp_temp = np.array(tx_items)
+                        self.logger.debug("{0} - {1}".format(self.get_im(tx_items), im3_comp_temp))
+                        im3[im3_cnt]["IM"] = self.get_im(tx_items)
+                        im3[im3_cnt]["IM_COMP"] = im3_comp_temp
+                        im3[im3_cnt]["IM_FULL"] = self.get_im_full(im3[im3_cnt]["IM"], im3_band_tmp)
+                        im3_cnt += 1
+                    # im3 = np.append(im3, [self.get_im(tx_items), im3_comp_temp])
                     if max_order <= im_order_cnt:
                         continue
-                    for l in tx_enum:
-                        for m in tx_enum:
-                            im5 = np.append(
-                                    im5,
-                                    tx_list[i] +
-                                    tx_list[j] +
-                                    tx_list[k] -
-                                    tx_list[l] -
-                                    tx_list[m])
-                            im5_band = np.append(
-                                    im5_band,
-                                    im3_band +
-                                    tx_bandwith[l] +
-                                    tx_bandwith[m])
+                    for l in range(j, len(tx_list)):
+                        for m in range(k, len(tx_list)):
                             im_order_cnt = 5
+                            im5_band_tmp = sum([tx_bandwith[x] for x in [i, j, k, l, m]])
+                            tx_items = [tx_list[x] for x in [i, j, l, k, m]]
+                            if len(np.unique(tx_items)) > 1:
+                                im5_comp_temp = np.array(tx_items)
+                                im5[im5_cnt]["IM"] = self.get_im(tx_items)
+                                im5[im5_cnt]["IM_COMP"] = im5_comp_temp
+                                im5[im5_cnt]["IM_FULL"] = self.get_im_full(im5[im5_cnt]["IM"], im5_band_tmp)
+                                im5_cnt += 1
 
-        im3_full = np.empty(shape=[len(im3), 2])
-        im5_full = np.empty(shape=[len(im5), 2])
-        # IM min and max array, IM5 will always be longer..
-        im_full_enum = range(0, len(im5)) if len(im5) != 0 else range(0, len(im3))
-        # IM f0 - band, f0 + band
-        for i in im_full_enum:
-            if i < len(im3):
-                im_tmp = [im3[i] - im3_band[i]/2.0, im3[i] + im3_band[i]/2.0]
-                # logger.info(im_tmp)
-                im3_full[i] = im_tmp
-            if max_order >= 5:
-                im_tmp = [im5[i] - im5_band[i]/2.0, im5[i] + im5_band[i]/2.0]
-                # logger.info(im_tmp)
-                im5_full[i] = im_tmp
+        im3 = self._clean_array(im3)
+        if max_order >= 5 or True:
+            im5 = self._clean_array(im5)
+        return (im3, im3["IM_FULL"]), (im5, im5["IM_FULL"])
 
-        im3, im3_full = self._clean_arrays(im3, im3_full)
-        if max_order >=5:
-            im5, im5_full = self._clean_arrays(im5, im5_full)
+    def _clean_array(self, input_arr):
+        to_clean = []
+        im_order = len(input_arr[0]["IM_COMP"])
+        self.logger.debug(pprint.pformat(input_arr))
+        input_arr = np.unique(input_arr, axis=0)
+        self.logger.debug(pprint.pformat(input_arr))
 
-        return (im3, im3_full), (im5, im5_full)
+        for e in range(0, len(input_arr)):
+            if len(np.unique(input_arr[e]["IM_COMP"])) < 2:
+                to_clean.append(e)
+
+        if len(to_clean) > 0:
+            input_arr = np.delete(input_arr, to_clean)
+
+        self.logger.debug(pprint.pformat(input_arr))
+        self.logger.debug("====")
+        return input_arr
 
     def _clean_arrays(self, im, im_full):
         # logger.error(im)
         im_full = im_full[im_full[:, 0].argsort()]
         self.logger.debug("IM_FULL:{0}".format(pprint.pformat(im_full)))
-        # logger.debug("sorting...")
-        # logger.debug(im)
-        im = np.sort(np.unique(im))
+        self.logger.debug(im)
+        self.logger.debug(im["IM"])
+        im = np.unique(im, axis=0)
+        # im = im[im[:, 0].argsort()]
+        # im = np.array([x for x in im if len(x[1]) > 1])
         im_full = np.unique(im_full, axis=0)
-        # logger.warning(len(im))
-        # logger.debug(im)
-        # logger.debug("IM_FULL:{0}".format(pprint.pformat(im_full)))
+        self.logger.debug("-----------------")
+        self.logger.debug(im)
+        self.logger.debug("IM_FULL:{0}".format(pprint.pformat(im_full)))
         return im, im_full
 
     def check_rx(self, rx_list, pim_list, rx_bandwith=None):
@@ -128,10 +152,11 @@ class PIMCalc:
             rx_min = x - x_band/2.0
             rx_max = x + x_band/2.0
             rx_wide = [rx_min, rx_max]
-            self.logger.debug(rx_min)
-            self.logger.debug(rx_max)
-            for pim in pim_list:
+            self.logger.debug("RX: {0}-{1}".format(rx_min, rx_max))
+            for e in range(0, len(pim_list)):
                 hit = 0
+                pim = pim_list[e]["IM_FULL"]
+                pim_src = pim_list[e]["IM_COMP"]
                 self.logger.debug(pim)
                 # check fully inside
                 if rx_min <= pim[0] <= rx_max:
@@ -143,15 +168,15 @@ class PIMCalc:
                     hit += 1
 
                 if hit > 0:
-                    msg = "RX{0} is affected by {1}".format(rx_wide, pim)
-                    im_hits.append((rx_wide, pim))
+                    msg = "RX{0} is affected by {1} from: {2}".format(rx_wide, pim, pim_src)
+                    im_hits.append((rx_wide, pim, pim_src))
                     if hit > 1:
                         msg = "".join([msg, " - RX fully covered by PIM"])
                     self.logger.debug(msg)
 
         return im_hits
 
-    def get_results(self, tx_list, tx_bandwith, rx_list=None, rx_bandwith=None):
+    def get_results(self, tx_list, tx_bandwith, rx_list=None, rx_bandwith=None, show_src=True):
         """ Wrapper to calculate PIM and check rx hits in one go
         Args:
             tx_list: List of TX carriers in MHz
@@ -167,28 +192,35 @@ class PIMCalc:
 
         im_result = self.calculate(tx_list, tx_bandwith)
         text_result = []
-        im_name = cycle(["IM3", "IM5"]).next
+        im_name = "IM3"
+        if sys.version_info >= (3, 0):
+            im_name = cycle(["IM3", "IM5"]).__next__
+        else:
+            im_name = cycle(["IM3", "IM5"]).next
 
         pim_result = []
         rx_result = []
         for im, im_full in im_result:
             name = im_name()
             self.logger.info(48*"=")
-            self.logger.info(im)
-            self.logger.info("==== {0}:fmin, fmax ====".format(name))
-            self.logger.info(im_full)
+            text_result.append(48*"=")
+            self.logger.info("PIM Cf | f min  | f max  | TX source")
+            text_result.append("PIM Cf | f min  | f max  | TX source")
+            for pim in range(0, len(im)):
+                out = "{0} | {1} | {2} | {3}".format(
+                        im["IM"][pim],
+                        im["IM_FULL"][pim][0],
+                        im["IM_FULL"][pim][1],
+                        im["IM_COMP"][pim])
+                self.logger.info(out)
+                text_result.append(out)
             self.logger.info(48*"=")
             text_result.append(48*"=")
-            text_result.append("==== {0} ====".format(name))
-            text_result.append(str(im))
-            text_result.append("==== {0}:fmin, fmax ====".format(name))
-            text_result.append(str(im_full))
-            text_result.append(48*"=")
 
-            pim_result.append((name, im_full))
+            pim_result.append((name, im["IM_FULL"]))
             if rx_list is not None:
                 self.logger.info("==== RX check ===")
-                im_hits = self.check_rx(rx_list, im_full, rx_bandwith)
+                im_hits = self.check_rx(rx_list, im, rx_bandwith)
                 if len(im_hits) > 0:
                     self.logger.warning("yey, we've got some {0} PIM".format(name))
                 rx_result.append(("{} RX".format(name), im_hits))
@@ -200,11 +232,10 @@ class PIMCalc:
             self.logger.warning("===== {0} =====".format(im_type))
             text_result.append("===== {0} =====".format(im_type))
             for pim in rx_res[1]:
-                self.logger.warning("{0} is inside: {1}".format(pim[0], pim[1]))
-                text_result.append("{0} is inside: {1}".format(pim[0], pim[1]))
+                self.logger.warning("{0} is inside: {1}, TX src: {2}".format(pim[0], pim[1], pim[2]))
+                text_result.append("{0} is inside: {1}, TX src: {2}".format(pim[0], pim[1], pim[2]))
 
         return text_result, pim_result, rx_result
-
 
 
 def read_args():
@@ -270,7 +301,7 @@ def main():
     # setup logger
     console = logging.StreamHandler()
     console.setLevel(setup_dict["log_lvl"])
-    logger = logging.getLogger("test_executor")
+    logger = logging.getLogger()
     logger.addHandler(console)
     logger.setLevel("DEBUG")
 
@@ -286,7 +317,7 @@ def main():
     logger.info("Using RX Carriers:{0}".format(tx_size))
     logger.info("Using RX Carriers:{0}".format(rx_list))
     logger.info("Using RX Carriers:{0}".format(rx_size))
-    
+
     text_result, im_result, rx_result = pimc.get_results(tx_list,
                                                          tx_size,
                                                          rx_list,
