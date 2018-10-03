@@ -6,7 +6,7 @@ python:
 install:
   - pip install numpy
   - pip install scipy
-  - pip install PySide2 pytest-qt pytest-cov pytest-mock
+  - pip install PySide2 pytest-qt pytest-cov pytest-mock matplotlib
 # command to run tests
 script:
   - python -m pytest -vv --cov PIM_Calculator

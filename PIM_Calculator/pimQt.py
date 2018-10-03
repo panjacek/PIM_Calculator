@@ -3,7 +3,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import sys
 from PySide2 import QtWidgets, QtCore
-from pim_calc import PIMCalc
+from PIM_Calculator.pim_calc import PIMCalc
 import logging
 from itertools import cycle
 
@@ -44,7 +44,7 @@ class PIMCanvas(FigureCanvas):
     def compute_initial_figure(self):
         plt.style.use('bmh')
 
-	def plot_beta_hist(ax, a, b):
+        def plot_beta_hist(ax, a, b):
             from numpy.random import beta
             ax.hist(beta(a, b, size=10000), histtype="stepfilled",
             bins=25, alpha=0.8, density=True)

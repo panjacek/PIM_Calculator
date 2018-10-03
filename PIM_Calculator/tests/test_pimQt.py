@@ -32,12 +32,12 @@ class TestpimQt(object):
         assert window.size() == QtCore.QSize(400, 191)
 
 
-    def test_MainWindow_closeEvent(qtbot, main_window, mocker):
+    def test_MainWindow_closeEvent(self, qtbot, main_window, mocker):
         file_quit = mocker.patch.object(main_window, "fileQuit")
         main_window.closeEvent("XX")
         file_quit.assert_called_once_with()
 
-    def test_MainWindow_fileQuit(qtbot, main_window, mocker):
+    def test_MainWindow_fileQuit(self, qtbot, main_window, mocker):
         exit = mocker.patch.object(main_window, "close")
         wind1_mock = mocker.Mock()
         wind2_mock = mocker.Mock()
