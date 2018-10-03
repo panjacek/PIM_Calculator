@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='PIM_Calculator',
-      version='0.2',
+      version='0.2.5',
       description='Passive Intermodulation Calculator for RF antennas',
       url='http://github.com/panjacek/PIM_Calculator',
       author='Jacek Kreft',

@@ -23,6 +23,10 @@ except ImportError:
     raise
 
 
+VERSION="0.2.5"
+
+
+#TODO: add slots and signals
 class PIMCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
@@ -48,7 +52,6 @@ class PIMCanvas(FigureCanvas):
             from numpy.random import beta
             ax.hist(beta(a, b, size=10000), histtype="stepfilled",
             bins=25, alpha=0.8, density=True)
-
 
         ax = self.axes
         # fig, ax = plt.subplots()
@@ -141,14 +144,8 @@ class PIMPlot(QtWidgets.QWidget):
     def __init__(self, item):
         QtWidgets.QWidget.__init__(self)
 
-    def paintEvent(self, e):
-        dc = QtWidgets.QPainter(self)
-        dc.drawLine(0, 0, 100, 100)
-        dc.drawLine(100, 0, 0, 100)
-
 
 class ScrollMessageBox(QtWidgets.QMessageBox):
-
     def __init__(self, widgets, *args, **kwargs):
         QtWidgets.QMessageBox.__init__(self, *args, **kwargs)
 
@@ -169,8 +166,8 @@ class ScrollMessageBox(QtWidgets.QMessageBox):
         self.setStyleSheet("QScrollArea{min-width:640 px; min-height: 480px}")
 
 
+#TODO: add slots and signals
 class MainWindow(QtWidgets.QMainWindow):
-
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
         # super(MainWindow, self).__init__()
@@ -263,10 +260,6 @@ class MainWindow(QtWidgets.QMainWindow):
         grid.addWidget(self.chk_box[1], 3, 4)
         grid.addWidget(self.chk_box[2], 4, 4)
 
-        # Set up logging to use your widget as a handler
-        # log_handler = QPlainTextEditLogger()
-        # logging.getLogger().addHandler(log_handler)
-
         self.setGeometry(500, 300, 400, 150)
 
         self.main_widget.setFocus()
@@ -313,9 +306,6 @@ class MainWindow(QtWidgets.QMainWindow):
         box = ScrollMessageBox(text_obj)
         box.setWindowTitle('PIM Calculator Results')
         result = box.exec_()
-
-        # self.w.setGeometry(QtGui.QRect(100, 100, 400, 200))
-        # self.w.show()
 
     def result_window(self, item, item_name="Results"):
         item.setWindowTitle(item_name)
@@ -376,26 +366,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show_results(text_result, plot_results, plot_im, im_data=im_result, rx_data=rx_result)
 
     def about(self):
-        QtWidgets.QMessageBox.about(self, "About",
-                                    """PIM Calculator
-This program is a simple GUI hello world of a Qt5 application embedding matplotlib canvases.
+        QtWidgets.QMessageBox.about(
+                self, "About",
+                """PIM Calculator
+This program is a simple GUI for Passive InterModulation Calculation.
+versio={0}
+""".format(VERSION))
 
-"""                                )
-
-
-class QPlainTextEditLogger(logging.Handler):
-    def __init__(self, parent):
-        super().__init__()
-
-        self.widget = QtWidgets.QPlainTextEdit(parent)
-        self.widget.setReadOnly(True)
-
-    def emit(self, record):
-        msg = self.format(record)
-        self.widget.textCursor().appendPlainText(msg)
-
-    def write(self, m):
-        pass
 
 def main():
     # setup logger
@@ -407,8 +384,6 @@ def main():
 
     # Allow the taking of command line arguements
     app = QtWidgets.QApplication(sys.argv)
-    # label = QLabel("<font color=red size=40>Hello World!</font>")
-    # label.show()
 
     main = MainWindow()
     # Ensure the execution stops correctly

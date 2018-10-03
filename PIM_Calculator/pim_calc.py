@@ -18,6 +18,7 @@ class PIMCalc:
             setattr(self, k, v)
 
         if self.logger is None:
+            logging.basicConfig()
             self.logger = logging.getLogger(__name__)
 
     def get_im_full(self, cf, pim_size):
@@ -301,7 +302,7 @@ def main():
     # setup logger
     console = logging.StreamHandler()
     console.setLevel(setup_dict["log_lvl"])
-    logger = logging.getLogger()
+    logger = logging.getLogger(__name__)
     logger.addHandler(console)
     logger.setLevel("DEBUG")
 

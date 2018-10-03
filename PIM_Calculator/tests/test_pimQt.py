@@ -1,5 +1,5 @@
 import pytest
-from PIM_Calculator.pimQt import QPlainTextEditLogger, ScrollMessageBox, MainWindow
+from PIM_Calculator.pimQt import ScrollMessageBox, MainWindow
 from PySide2 import QtWidgets, QtCore
 import logging
 
@@ -30,7 +30,6 @@ class TestpimQt(object):
 
         # check file menus
         assert window.file_menu is not None
-        assert window.size() == QtCore.QSize(400, 191)
 
     def test_MainWindow_closeEvent(self, qtbot, main_window, mocker, xvfb):
         file_quit = mocker.patch.object(main_window, "fileQuit")
