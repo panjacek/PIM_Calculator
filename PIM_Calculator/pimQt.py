@@ -2,7 +2,6 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 import sys
-# from PySide2.QtWidgets import QApplication, QWidget, QLabel, QPushButton
 from PySide2 import QtWidgets, QtCore
 from pim_calc import PIMCalc
 import logging
@@ -236,10 +235,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.fields.append(QtWidgets.QLineEdit("1900,1880", self))
         self.fields.append(QtWidgets.QLineEdit("5,5", self))
 
-        # set validators later..
-        # for field in self.fields:
-        #    field.setValidator(validator_number)
-
         # Grid
         grid_main = QtWidgets.QGridLayout(self.main_widget)
         grid_main.setSpacing(5)
@@ -405,12 +400,11 @@ class QPlainTextEditLogger(logging.Handler):
     def write(self, m):
         pass
 
-
-if __name__ == "__main__":
+def main():
     # setup logger
     console = logging.StreamHandler()
     console.setLevel("DEBUG")
-    logger = logging.getLogger("test_executor")
+    logger = logging.getLogger(__name__)
     logger.addHandler(console)
     logger.setLevel("DEBUG")
 
@@ -422,3 +416,6 @@ if __name__ == "__main__":
     main = MainWindow()
     # Ensure the execution stops correctly
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    main()
