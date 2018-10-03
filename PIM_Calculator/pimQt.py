@@ -170,15 +170,15 @@ class ScrollMessageBox(QtWidgets.QMessageBox):
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    # elements
-    labels = []
-    fields = []
-    chk_box = []
-    windows = []
 
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
         # super(MainWindow, self).__init__()
+        # elements
+        self.labels = []
+        self.fields = []
+        self.chk_box = []
+        self.windows = []
         self.initUI()
 
     def fileQuit(self):
@@ -218,9 +218,6 @@ class MainWindow(QtWidgets.QMainWindow):
         calculate_btn.setToolTip('<b>Click to calculate</b>')
         calculate_btn.resize(calculate_btn.sizeHint())
         calculate_btn.clicked.connect(self.on_calculate_click)
-
-        # validators
-        # validator_number = QtGui.QIntValidator(0,1, self)
 
         # Labels and text forms
         self.labels.append(QtWidgets.QLabel("<b>TX Carriers</b>", self))

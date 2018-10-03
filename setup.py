@@ -12,7 +12,7 @@ setup(name='PIM_Calculator',
           'bin/PIM_GUI_Calculator'
       ],
       setup_requires=['pytest'],
-      tests_require=['pytest', 'pytest-mock', 'pytest-cov', 'pytest-qt'],
+      tests_require=['pytest', 'pytest-mock', 'pytest-cov', 'pytest-qt', 'pytest-xvfb'],
       entry_points = {
             'console_scripts': [
                 'PIM_Calculator=PIM_Calculator.pim_calc:main',

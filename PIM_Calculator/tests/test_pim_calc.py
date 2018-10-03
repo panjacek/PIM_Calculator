@@ -6,6 +6,7 @@ import pytest
 import logging
 import pprint
 import numpy as np
+import imp, sys
 
 
 @pytest.fixture
@@ -14,7 +15,6 @@ def pimc():
 
 @pytest.mark.script_launch_mode('subprocess')
 def test_main():
-    import imp, sys
     sys.argv = ["pim_calc.py", "--help"]
     with pytest.raises(SystemExit):
         main()

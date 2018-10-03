@@ -5,18 +5,19 @@ import logging
 
 
 @pytest.fixture
-def main_window(mocker, qtbot):
-    mocker.patch("PIM_Calculator.pimQt.MainWindow.initUI")
-    return MainWindow()
+def main_window(mocker, qtbot, xvfb):
+    ui_mock = mocker.patch("PIM_Calculator.pimQt.MainWindow.initUI")
+    main_window = MainWindow()
+    main_window.ui_mock = ui_mock
+    return main_window
 
 
 class TestpimQt(object):
-    def test_MainWindow_init(self, qtbot, main_window):
+    def test_MainWindow_init(self, qtbot, main_window, xvfb):
         main_window.initUI.assert_called_once_with()
 
-    def test_MainWindow_initUI(self, qtbot, mocker):
+    def test_MainWindow_initUI(self, qtbot, mocker, xvfb):
         window = MainWindow()
-        window.show()
         qtbot.addWidget(window)
 
         assert len(window.labels) == 6
@@ -31,13 +32,13 @@ class TestpimQt(object):
         assert window.file_menu is not None
         assert window.size() == QtCore.QSize(400, 191)
 
-
-    def test_MainWindow_closeEvent(self, qtbot, main_window, mocker):
+    def test_MainWindow_closeEvent(self, qtbot, main_window, mocker, xvfb):
         file_quit = mocker.patch.object(main_window, "fileQuit")
         main_window.closeEvent("XX")
         file_quit.assert_called_once_with()
+        print("AA")
 
-    def test_MainWindow_fileQuit(self, qtbot, main_window, mocker):
+    def test_MainWindow_fileQuit(self, qtbot, main_window, mocker, xvfb):
         exit = mocker.patch.object(main_window, "close")
         wind1_mock = mocker.Mock()
         wind2_mock = mocker.Mock()
