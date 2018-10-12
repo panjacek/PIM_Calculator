@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='PIM_Calculator',
-      version='0.2.5',
+      version='0.1.5',
       description='Passive Intermodulation Calculator for RF antennas',
       url='http://github.com/panjacek/PIM_Calculator',
       author='Jacek Kreft',
@@ -11,9 +11,12 @@ setup(name='PIM_Calculator',
           'bin/PIM_Calculator',
           'bin/PIM_GUI_Calculator'
       ],
-      setup_requires=['pytest'],
-      tests_require=['pytest', 'pytest-mock', 'pytest-cov', 'pytest-qt', 'pytest-xvfb'],
-      entry_points = {
+      python_requires='>=2.7',
+      tests_require=[
+          'pytest', 'pytest-mock', 'pytest-cov',
+          'pytest-qt', 'pytest-xvfb', 'scipy', 'matplotlib>=2.0'
+      ],
+      entry_points={
             'console_scripts': [
                 'PIM_Calculator=PIM_Calculator.pim_calc:main',
                 'PIM_GUI_Calculator=PIM_Calculator.pimQt:main [GUI]'
@@ -27,4 +30,7 @@ setup(name='PIM_Calculator',
               'PySide2', 'scipy>=1.0', 'matplotlib>=2.0'
           ]
       },
+      classifiers=[
+          'Operating System :: OS Independent'
+      ],
       zip_safe=False)

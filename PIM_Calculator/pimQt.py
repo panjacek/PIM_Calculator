@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 from __future__ import unicode_literals
 import sys
@@ -23,7 +24,7 @@ except ImportError:
     raise
 
 
-VERSION="0.2.5"
+VERSION="0.1.5"
 
 
 #TODO: add slots and signals
@@ -33,8 +34,6 @@ class PIMCanvas(FigureCanvas):
     def __init__(self, parent=None, width=6, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
-        # self.fig, self.axes = plt.subplots()
-
         self.compute_initial_figure()
 
         FigureCanvas.__init__(self, fig)
@@ -48,27 +47,13 @@ class PIMCanvas(FigureCanvas):
     def compute_initial_figure(self):
         plt.style.use('bmh')
 
-        def plot_beta_hist(ax, a, b):
-            from numpy.random import beta
-            ax.hist(beta(a, b, size=10000), histtype="stepfilled",
-            bins=25, alpha=0.8, density=True)
-
-        ax = self.axes
-        # fig, ax = plt.subplots()
-        plot_beta_hist(ax, 10, 10)
-        plot_beta_hist(ax, 4, 12)
-        plot_beta_hist(ax, 50, 12)
-        plot_beta_hist(ax, 6, 55)
-        ax.set_title("'bmh' style sheet")
-        # plt.show()
-
     def update_figure(self, data, plot_name=""):
         self.axes.cla()
         self.axes.set_title(plot_name)
         self.axes.set_ylabel("Power Normalized")
         self.axes.set_xlabel("Frequency [MHz]")
 
-        # Shapes: 
+        # Shapes:
         shape_im = np.array([0.2, 0.4, 0.50, 0.55, 0.58, 0.6,
                              0.6, 0.6, 0.6,
                              0.6, 0.58, 0.55, 0.50, 0.4, 0.2])
@@ -87,13 +72,13 @@ class PIMCanvas(FigureCanvas):
 
                 # make pseudo PIM shape with edges lower than middle
                 y = np.outer(shape_im, np.ones(len(x))).ravel()
-                y = y[::len(y)/len(x)]
+                y = y[::int(len(y)/len(x))]
                 x2 = np.linspace(x.min(), x.max(), num=124)
                 y = spline(x, y, x2)
 
                 self.axes.plot(x2, y,
-                              label="IM Cf={0}".format(x_cf), alpha=0.60,
-                              lw="3")
+                               label="IM Cf={0}".format(x_cf), alpha=0.60,
+                               lw="3")
 
                 rx_cf = rx[0] + (rx[1] - rx[0]) / 2
                 if rx_cf not in rx_present:
@@ -102,13 +87,13 @@ class PIMCanvas(FigureCanvas):
 
                     # make pseudo PIM shape with edges lower than middle
                     y = np.outer(shape_crr, np.ones(len(rx))).ravel()
-                    y = y[::len(y)/len(rx)]
+                    y = y[::int(len(y)/len(rx))]
                     rx2 = np.linspace(rx.min(), rx.max(), num=124)
                     y = spline(rx, y, rx2, order=2)
 
                     self.axes.plot(rx2, y,
-                                  label="RX Cf={0}".format(rx_cf), alpha=0.8,
-                                  lw="3")
+                                   label="RX Cf={0}".format(rx_cf), alpha=0.8,
+                                   lw="3")
                     rx_present.append(rx_cf)
                 self.axes.legend()
             self.draw()
@@ -122,13 +107,13 @@ class PIMCanvas(FigureCanvas):
             x = np.linspace(pim[0], pim[1], num=15, endpoint=True)
             x_cf = pim[0] + (pim[1] - pim[0]) / 2
             y = np.outer(shape_im, np.ones(len(x))).ravel()
-            y = y[::len(y)/len(x)]
+            y = y[::int(len(y)/len(x))]
             x2 = np.linspace(x.min(), x.max(), num=124)
             y = spline(x, y, x2)
 
             self.axes.plot(x2, y,
-                          label="IM Cf={0}".format(x_cf), alpha=0.60,
-                          lw="3")
+                           label="IM Cf={0}".format(x_cf), alpha=0.60,
+                           lw="3")
             """self.axes.bar(x, y,
                           label="Cf={0}".format(x[0]+(x[-1]-x[0])/2),
                           alpha=0.60,
@@ -151,7 +136,7 @@ class ScrollMessageBox(QtWidgets.QMessageBox):
 
         scroll = QtWidgets.QScrollArea(self)
         scroll.setWidgetResizable(True)
-        scroll.setGeometry(100,100,100,100)
+        scroll.setGeometry(100, 100, 100, 100)
         self.content = QtWidgets.QWidget()
         scroll.setWidget(self.content)
         lay = QtWidgets.QVBoxLayout(self.content)
@@ -384,6 +369,7 @@ def main():
 
     # Allow the taking of command line arguements
     app = QtWidgets.QApplication(sys.argv)
+    app.setStyleSheet("QMessageBox { messagebox-text-interaction-flags: 5; }")
 
     main = MainWindow()
     # Ensure the execution stops correctly
