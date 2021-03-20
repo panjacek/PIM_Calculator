@@ -1,12 +1,13 @@
 language: python
+services: xvfb
 python:
-  - "2.7"
   - "3.6"
+  - "3.9"
 # command to install dependencies
 install:
   - pip install numpy
   - pip install scipy
-  - pip install PySide2 pytest-qt pytest-cov pytest-mock matplotlib pytest-xvfb
+  - pip install PySide2==5.15.2 pytest-qt==3.3.0 pytest-cov pytest-mock==3.5.1 matplotlib pytest-xvfb==2.0.0
 # command to run tests
 script:
-  - python -m pytest -vv --cov ./PIM_Calculator
+  - cd python && python -m pytest -vv --cov ./PIM_Calculator

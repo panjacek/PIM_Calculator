@@ -1,7 +1,9 @@
-import pytest
-from PIM_Calculator.pimQt import ScrollMessageBox, MainWindow
-from PySide2 import QtWidgets, QtCore
 import logging
+
+import pytest
+from PySide2 import QtCore, QtWidgets
+
+from PIM_Calculator.pimQt import MainWindow, ScrollMessageBox
 
 
 @pytest.fixture
@@ -43,10 +45,7 @@ class TestpimQt(object):
         exit = mocker.patch.object(main_window, "close")
         wind1_mock = mocker.Mock()
         wind2_mock = mocker.Mock()
-        main_window.windows = [
-                    wind1_mock,
-                    wind2_mock
-                ]
+        main_window.windows = [wind1_mock, wind2_mock]
         mocker.patch.object(wind1_mock, "close")
         mocker.patch.object(wind2_mock, "close")
         main_window.fileQuit()
@@ -54,4 +53,3 @@ class TestpimQt(object):
         for wind in main_window.windows:
             wind.close.assert_called_once_with()
         exit.assert_called_once_with()
-
