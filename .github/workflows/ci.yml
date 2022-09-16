@@ -28,10 +28,12 @@ jobs:
           set -xe
           python -m site
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions          
+          python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions
+          python -m pip install numpy scipy
+          python -m pip install PySide2==5.15.2 pytest-qt==3.3.0 pytest-cov pytest-mock==3.5.1 matplotlib pytest-xvfb==2.0.0
 
       - name: "Run tox targets for ${{ matrix.python-version }}"
-        run: "cd python && python -m tox"
+        run: "cd python && python -m pytest -vv --cov ./PIM_Calculator"
       - name: "Convert coverage"
         run: "cd python && python -m coverage xml"
       - name: "Upload coverage to Codecov"
