@@ -27,7 +27,7 @@ jobs:
           python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions
           python -m pip install numpy scipy
           python -m pip install PySide2~=5.15.2 pytest-qt==3.3.0 pytest-cov pytest-mock==3.5.1 matplotlib pytest-xvfb==2.0.0
-          sudo apt install -y xvfb x11-utils libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 xdotool          
+          sudo apt install --no-install-recommends -y xvfb x11-utils libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 xdotool          
       - name: "Run pytest for ${{ matrix.python-version }}"
         run: |
           cd python
