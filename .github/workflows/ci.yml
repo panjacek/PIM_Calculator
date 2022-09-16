@@ -36,8 +36,4 @@ jobs:
       - name: "Run pytest for ${{ matrix.python-version }}"
         run: |
           cd python
-          xvfb-run --auto-servernum python -m pytest -vv --cov ./PIM_Calculator --cov-report xml:coverage.xml
-      - name: "Upload coverage to Codecov"
-        uses: "codecov/codecov-action@v2"
-        with:
-          fail_ci_if_error: true
+          xvfb-run --auto-servernum python -m pytest -vv --cov ./PIM_Calculator --cov-report term
