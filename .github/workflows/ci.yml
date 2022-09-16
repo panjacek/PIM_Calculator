@@ -36,7 +36,7 @@ jobs:
       - name: "Run tox targets for ${{ matrix.python-version }}"
         run: |
           cd python
-          xvfb-run --aut-servernum python -m pytest -vv --cov ./PIM_Calculator
+          xvfb-run --auto-servernum python -m pytest -vv --cov ./PIM_Calculator
       - name: "Convert coverage"
         run: "cd python && python -m coverage xml"
       - name: "Upload coverage to Codecov"
