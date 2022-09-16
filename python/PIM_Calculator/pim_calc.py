@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
+
+import argparse
 import logging
 import pprint
-import numpy as np
-from itertools import cycle
-from copy import deepcopy
-import argparse
 import sys
+from copy import deepcopy
+from itertools import cycle
+
+import numpy as np
 
 
 class PIMCalc:
     """ PIM calculator class """
+
     logger = None
 
     def __init__(self, **kwargs):
@@ -24,10 +27,10 @@ class PIMCalc:
 
     def get_im_full(self, cf, pim_size):
         """ Get full size if PIM """
-        return [cf - pim_size/2.0, cf + pim_size/2.0]
+        return [cf - pim_size / 2.0, cf + pim_size / 2.0]
 
     def get_im(self, tx_list):
-        """ Calculate Center Frequency of intermodulation from given frequencies
+        """Calculate Center Frequency of intermodulation from given frequencies
         Args:
             tx_list: list of frequencies
         return:
@@ -38,7 +41,7 @@ class PIMCalc:
             return tx_list[0] + tx_list[1] + tx_list[2] - tx_list[3] - tx_list[4]
 
     def calculate(self, tx_list, tx_bandwith=None, max_order=5):
-        """ Method to calculate PIM based on list of TX carriers.
+        """Method to calculate PIM based on list of TX carriers.
 
         Args:
             tx_list: list of tx carriers in MHz
@@ -61,12 +64,14 @@ class PIMCalc:
             tx_bandwith = np.array([tx_bandwith[0] for x in tx_list])
 
         # initialize numpy arrays
-        im3 = np.zeros(shape=[len(tx_list)**3],
-                       dtype=([("IM", float),
-                       ("IM_COMP", float, (3,)), ("IM_FULL", float, (2,))]))
-        im5 = np.zeros(shape=[len(tx_list)**5],
-                       dtype=([("IM", float), ("IM_COMP", float, (5,)),
-                       ("IM_FULL", float, (2,))]))
+        im3 = np.zeros(
+            shape=[len(tx_list) ** 3],
+            dtype=([("IM", float), ("IM_COMP", float, (3,)), ("IM_FULL", float, (2,))]),
+        )
+        im5 = np.zeros(
+            shape=[len(tx_list) ** 5],
+            dtype=([("IM", float), ("IM_COMP", float, (5,)), ("IM_FULL", float, (2,))]),
+        )
         im3_cnt = 0
         im5_cnt = 0
 
@@ -97,7 +102,9 @@ class PIMCalc:
                                 im5_comp_temp = np.array(tx_items)
                                 im5[im5_cnt]["IM"] = self.get_im(tx_items)
                                 im5[im5_cnt]["IM_COMP"] = im5_comp_temp
-                                im5[im5_cnt]["IM_FULL"] = self.get_im_full(im5[im5_cnt]["IM"], im5_band_tmp)
+                                im5[im5_cnt]["IM_FULL"] = self.get_im_full(
+                                    im5[im5_cnt]["IM"], im5_band_tmp
+                                )
                                 im5_cnt += 1
 
         im3 = self._clean_array(im3)
@@ -151,8 +158,8 @@ class PIMCalc:
 
         im_hits = []
         for x, x_band in zip(rx_list, rx_bandwith):
-            rx_min = x - x_band/2.0
-            rx_max = x + x_band/2.0
+            rx_min = x - x_band / 2.0
+            rx_max = x + x_band / 2.0
             rx_wide = [rx_min, rx_max]
             self.logger.debug("RX: {0}-{1}".format(rx_min, rx_max))
             for e in range(0, len(pim_list)):
@@ -165,7 +172,7 @@ class PIMCalc:
                     hit += 1
                 if rx_min <= pim[1] <= rx_max:
                     hit += 1
-                # check covering from outside fully 
+                # check covering from outside fully
                 if pim[0] <= rx_min and pim[1] >= rx_max:
                     hit += 1
 
@@ -179,7 +186,7 @@ class PIMCalc:
         return im_hits
 
     def get_results(self, tx_list, tx_bandwith, rx_list=None, rx_bandwith=None, show_src=True):
-        """ Wrapper to calculate PIM and check rx hits in one go
+        """Wrapper to calculate PIM and check rx hits in one go
         Args:
             tx_list: List of TX carriers in MHz
             tx_bandwith: List of TX carrier Bandwidth in MHz
@@ -204,20 +211,18 @@ class PIMCalc:
         rx_result = []
         for im, im_full in im_result:
             name = im_name()
-            self.logger.info(48*"=")
-            text_result.append(48*"=")
+            self.logger.info(48 * "=")
+            text_result.append(48 * "=")
             self.logger.info("PIM Cf | f min  | f max  | TX source")
             text_result.append("PIM Cf | f min  | f max  | TX source")
             for pim in range(0, len(im)):
                 out = "{0} | {1} | {2} | {3}".format(
-                        im["IM"][pim],
-                        im["IM_FULL"][pim][0],
-                        im["IM_FULL"][pim][1],
-                        im["IM_COMP"][pim])
+                    im["IM"][pim], im["IM_FULL"][pim][0], im["IM_FULL"][pim][1], im["IM_COMP"][pim]
+                )
                 self.logger.info(out)
                 text_result.append(out)
-            self.logger.info(48*"=")
-            text_result.append(48*"=")
+            self.logger.info(48 * "=")
+            text_result.append(48 * "=")
 
             pim_result.append((name, im["IM_FULL"]))
             if rx_list is not None:
@@ -226,22 +231,24 @@ class PIMCalc:
                 if len(im_hits) > 0:
                     self.logger.warning("yey, we've got some {0} PIM".format(name))
                 rx_result.append(("{} RX".format(name), im_hits))
-                text_result.append(48*"=")
-                self.logger.info(48*"=")
+                text_result.append(48 * "=")
+                self.logger.info(48 * "=")
 
         for rx_res in rx_result:
             im_type = rx_res[0]
             self.logger.warning("===== {0} =====".format(im_type))
             text_result.append("===== {0} =====".format(im_type))
             for pim in rx_res[1]:
-                self.logger.warning("{0} is inside: {1}, TX src: {2}".format(pim[0], pim[1], pim[2]))
+                self.logger.warning(
+                    "{0} is inside: {1}, TX src: {2}".format(pim[0], pim[1], pim[2])
+                )
                 text_result.append("{0} is inside: {1}, TX src: {2}".format(pim[0], pim[1], pim[2]))
 
         return text_result, pim_result, rx_result
 
 
 def read_args():
-    """ Method to parse the given arguments
+    """Method to parse the given arguments
 
     Returns:
         dictionary with the values given by the CLI
@@ -253,8 +260,9 @@ def read_args():
     parser.add_argument("--tx_size", dest="tx_size", help="List of TX Carriers bands [5MHz]")
     parser.add_argument("-r", "--rx_list", help="List of RX Carriers")
     parser.add_argument("--rx_size", dest="rx_size", help="List of RX Carriers bands [5MHz]")
-    parser.add_argument("--log_lvl", dest="log_lvl",
-                        help="logger level to display [INFO]", default="INFO")
+    parser.add_argument(
+        "--log_lvl", dest="log_lvl", help="logger level to display [INFO]", default="INFO"
+    )
 
     # args, leftovers = parser.parse_known_args()
     args = parser.parse_args()
@@ -287,12 +295,12 @@ def read_args():
             rx_size = [float(x) for x in args.rx_size.strip().split(",")]
 
     setup_dict = {
-            "tx_list": tx_list,
-            "tx_size": tx_size,
-            "rx_list": rx_list,
-            "rx_size": rx_size,
-            "log_lvl": args.log_lvl
-        }
+        "tx_list": tx_list,
+        "tx_size": tx_size,
+        "rx_list": rx_list,
+        "rx_size": rx_size,
+        "log_lvl": args.log_lvl,
+    }
 
     return setup_dict
 
@@ -320,11 +328,9 @@ def main():
     logger.info("Using RX Carriers:{0}".format(rx_list))
     logger.info("Using RX Carriers:{0}".format(rx_size))
 
-    text_result, im_result, rx_result = pimc.get_results(tx_list,
-                                                         tx_size,
-                                                         rx_list,
-                                                         rx_size)
+    text_result, im_result, rx_result = pimc.get_results(tx_list, tx_size, rx_list, rx_size)
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

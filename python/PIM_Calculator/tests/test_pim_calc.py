@@ -1,19 +1,23 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-from PIM_Calculator.pim_calc import PIMCalc
-from PIM_Calculator.pim_calc import main
-import pytest
+
+import imp
 import logging
 import pprint
+import sys
+
 import numpy as np
-import imp, sys
+import pytest
+
+from PIM_Calculator.pim_calc import PIMCalc, main
 
 
 @pytest.fixture
 def pimc():
     return PIMCalc()
 
-@pytest.mark.script_launch_mode('subprocess')
+
+@pytest.mark.script_launch_mode("subprocess")
 def test_main():
     sys.argv = ["pim_calc.py", "--help"]
     with pytest.raises(SystemExit):
@@ -54,6 +58,7 @@ def test_main():
     sys.argv = ["pim_calc.py", "1940,1980", "--rx_list=1752,1900"]
     with pytest.raises(SystemExit):
         main()
+
 
 def test_calculate(pimc):
     tx_list = []
@@ -103,6 +108,7 @@ def test_calculate(pimc):
 
     print(im3_hits)
     print(im5_hits)
+
 
 def test_calculate_3rd_order(pimc):
     tx_list = [1840.0, 1860.0]

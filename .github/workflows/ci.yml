@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: "Python ${{ matrix.python-version }}"
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+    steps:
+      - uses: "actions/checkout@v2"
+      - uses: "actions/setup-python@v2"
+        with:
+          python-version: "${{ matrix.python-version }}"
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -m site
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions
+          python -m pip install numpy scipy
+          python -m pip install PySide2~=5.15.2 pytest-qt==3.3.0 pytest-cov pytest-mock==3.5.1 matplotlib pytest-xvfb==2.0.0
+          sudo apt install --no-install-recommends -y xvfb x11-utils libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 xdotool          
+      - name: "Run pytest for ${{ matrix.python-version }}"
+        run: |
+          cd python
+          xvfb-run --auto-servernum python -m pytest -vv --cov ./PIM_Calculator --cov-report term

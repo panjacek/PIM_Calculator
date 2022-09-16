@@ -1,33 +1,38 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import print_function
-from __future__ import unicode_literals
-import sys
-from PySide2 import QtWidgets, QtCore
-from PIM_Calculator.pim_calc import PIMCalc
+from __future__ import print_function, unicode_literals
+
 import logging
+import sys
 from itertools import cycle
+
+from PySide2 import QtCore, QtWidgets
+
+from PIM_Calculator.pim_calc import PIMCalc
 
 # try to import plotting
 plt = None
 try:
     import matplotlib
-    matplotlib.use('Qt5Agg')
+
+    matplotlib.use("Qt5Agg")
+    import matplotlib.pyplot as plt
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
-    import matplotlib.pyplot as plt
-    plt.style.use('bmh')
+
+    plt.style.use("bmh")
     import numpy as np
-    from scipy.interpolate import interp1d, spline
+    from scipy.interpolate import interp1d
+    from scipy.interpolate import splrep as spline
 except ImportError:
     print("no plotting.. :/")
     raise
 
 
-VERSION="0.1.5"
+VERSION = "0.2"
 
 
-#TODO: add slots and signals
+# TODO: add slots and signals
 class PIMCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
@@ -39,13 +44,13 @@ class PIMCanvas(FigureCanvas):
         FigureCanvas.__init__(self, fig)
         self.setParent(parent)
 
-        FigureCanvas.setSizePolicy(self,
-                                   QtWidgets.QSizePolicy.Expanding,
-                                   QtWidgets.QSizePolicy.Expanding)
+        FigureCanvas.setSizePolicy(
+            self, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         FigureCanvas.updateGeometry(self)
 
     def compute_initial_figure(self):
-        plt.style.use('bmh')
+        plt.style.use("bmh")
 
     def update_figure(self, data, plot_name=""):
         self.axes.cla()
@@ -54,13 +59,11 @@ class PIMCanvas(FigureCanvas):
         self.axes.set_xlabel("Frequency [MHz]")
 
         # Shapes:
-        shape_im = np.array([0.2, 0.4, 0.50, 0.55, 0.58, 0.6,
-                             0.6, 0.6, 0.6,
-                             0.6, 0.58, 0.55, 0.50, 0.4, 0.2])
+        shape_im = np.array(
+            [0.2, 0.4, 0.50, 0.55, 0.58, 0.6, 0.6, 0.6, 0.6, 0.6, 0.58, 0.55, 0.50, 0.4, 0.2]
+        )
 
-        shape_crr = np.array([0.2, 0.5, 0.9, 0.99,
-                              1, 1, 1, 1, 1, 1, 1,
-                              0.99, 0.9, 0.5,  0.2])
+        shape_crr = np.array([0.2, 0.5, 0.9, 0.99, 1, 1, 1, 1, 1, 1, 1, 0.99, 0.9, 0.5, 0.2])
         # plot RX vs IM
         # if isinstance(data[0], tuple):
         if "RX" in plot_name:
@@ -72,28 +75,24 @@ class PIMCanvas(FigureCanvas):
 
                 # make pseudo PIM shape with edges lower than middle
                 y = np.outer(shape_im, np.ones(len(x))).ravel()
-                y = y[::int(len(y)/len(x))]
+                y = y[:: int(len(y) / len(x))]
                 x2 = np.linspace(x.min(), x.max(), num=124)
                 y = spline(x, y, x2)
 
-                self.axes.plot(x2, y,
-                               label="IM Cf={0}".format(x_cf), alpha=0.60,
-                               lw="3")
+                self.axes.plot(x2, y, label="IM Cf={0}".format(x_cf), alpha=0.60, lw="3")
 
                 rx_cf = rx[0] + (rx[1] - rx[0]) / 2
                 if rx_cf not in rx_present:
                     # rx = np.arange(rx[0], rx[1])
-                    rx = np.linspace(rx[0]-0.1, rx[1]+0.1, num=15)
+                    rx = np.linspace(rx[0] - 0.1, rx[1] + 0.1, num=15)
 
                     # make pseudo PIM shape with edges lower than middle
                     y = np.outer(shape_crr, np.ones(len(rx))).ravel()
-                    y = y[::int(len(y)/len(rx))]
+                    y = y[:: int(len(y) / len(rx))]
                     rx2 = np.linspace(rx.min(), rx.max(), num=124)
                     y = spline(rx, y, rx2, order=2)
 
-                    self.axes.plot(rx2, y,
-                                   label="RX Cf={0}".format(rx_cf), alpha=0.8,
-                                   lw="3")
+                    self.axes.plot(rx2, y, label="RX Cf={0}".format(rx_cf), alpha=0.8, lw="3")
                     rx_present.append(rx_cf)
                 self.axes.legend()
             self.draw()
@@ -107,13 +106,11 @@ class PIMCanvas(FigureCanvas):
             x = np.linspace(pim[0], pim[1], num=15, endpoint=True)
             x_cf = pim[0] + (pim[1] - pim[0]) / 2
             y = np.outer(shape_im, np.ones(len(x))).ravel()
-            y = y[::int(len(y)/len(x))]
+            y = y[:: int(len(y) / len(x))]
             x2 = np.linspace(x.min(), x.max(), num=124)
             y = spline(x, y, x2)
 
-            self.axes.plot(x2, y,
-                           label="IM Cf={0}".format(x_cf), alpha=0.60,
-                           lw="3")
+            self.axes.plot(x2, y, label="IM Cf={0}".format(x_cf), alpha=0.60, lw="3")
             """self.axes.bar(x, y,
                           label="Cf={0}".format(x[0]+(x[-1]-x[0])/2),
                           alpha=0.60,
@@ -151,7 +148,7 @@ class ScrollMessageBox(QtWidgets.QMessageBox):
         self.setStyleSheet("QScrollArea{min-width:640 px; min-height: 480px}")
 
 
-#TODO: add slots and signals
+# TODO: add slots and signals
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
@@ -174,18 +171,17 @@ class MainWindow(QtWidgets.QMainWindow):
     def initUI(self):
         # MENUS
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.setWindowTitle('-- PIM Calculator --')
+        self.setWindowTitle("-- PIM Calculator --")
 
-        self.file_menu = QtWidgets.QMenu('&File', self)
-        self.file_menu.addAction('&Quit', self.fileQuit,
-                                 QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
+        self.file_menu = QtWidgets.QMenu("&File", self)
+        self.file_menu.addAction("&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
         self.menuBar().addMenu(self.file_menu)
 
-        self.help_menu = QtWidgets.QMenu('&Help', self)
+        self.help_menu = QtWidgets.QMenu("&Help", self)
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.help_menu)
 
-        self.help_menu.addAction('&About', self.about)
+        self.help_menu.addAction("&About", self.about)
 
         self.main_widget = QtWidgets.QWidget(self)
 
@@ -196,8 +192,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.chk_box[-1].setChecked(False)
         self.chk_box.append(QtWidgets.QCheckBox("Show IM source"))
         self.chk_box[-1].setChecked(False)
-        calculate_btn = QtWidgets.QPushButton('Calculate', self)
-        calculate_btn.setToolTip('<b>Click to calculate</b>')
+        calculate_btn = QtWidgets.QPushButton("Calculate", self)
+        calculate_btn.setToolTip("<b>Click to calculate</b>")
         calculate_btn.resize(calculate_btn.sizeHint())
         calculate_btn.clicked.connect(self.on_calculate_click)
 
@@ -289,7 +285,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.result_window(w[1], item_name=w[0])
 
         box = ScrollMessageBox(text_obj)
-        box.setWindowTitle('PIM Calculator Results')
+        box.setWindowTitle("PIM Calculator Results")
         result = box.exec_()
 
     def result_window(self, item, item_name="Results"):
@@ -310,7 +306,9 @@ class MainWindow(QtWidgets.QMainWindow):
         pimc = PIMCalc()
 
         # get IM results
-        text_result, im_result, rx_result = pimc.get_results(tx_list, tx_bandwith, rx_list, rx_bandwith)
+        text_result, im_result, rx_result = pimc.get_results(
+            tx_list, tx_bandwith, rx_list, rx_bandwith
+        )
 
         """
         im_result = pimc.calculate(tx_list, tx_bandwith=tx_size)
@@ -352,11 +350,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def about(self):
         QtWidgets.QMessageBox.about(
-                self, "About",
-                """PIM Calculator
+            self,
+            "About",
+            """PIM Calculator
 This program is a simple GUI for Passive InterModulation Calculation.
 versio={0}
-""".format(VERSION))
+""".format(
+                VERSION
+            ),
+        )
 
 
 def main():
@@ -374,6 +376,7 @@ def main():
     main = MainWindow()
     # Ensure the execution stops correctly
     sys.exit(app.exec_())
+
 
 if __name__ == "__main__":
     main()
