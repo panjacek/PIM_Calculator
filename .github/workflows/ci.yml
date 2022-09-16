@@ -33,13 +33,11 @@ jobs:
           python -m pip install PySide2==5.15.2 pytest-qt==3.3.0 pytest-cov pytest-mock==3.5.1 matplotlib pytest-xvfb==2.0.0
           sudo apt install -y xvfb x11-utils libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 xdotool          
 
-      - name: "Run tox targets for ${{ matrix.python-version }}"
+      - name: "Run pytest for ${{ matrix.python-version }}"
         run: |
           cd python
-          xvfb-run --auto-servernum python -m pytest -vv --cov ./PIM_Calculator
-      - name: "Convert coverage"
-        run: "cd python && python -m coverage xml"
+          xvfb-run --auto-servernum python -m pytest -vv --cov ./PIM_Calculator --cov-report xml:coverage.xml
       - name: "Upload coverage to Codecov"
-        uses: "codecov/codecov-action@v1"
+        uses: "codecov/codecov-action@v2"
         with:
           fail_ci_if_error: true
