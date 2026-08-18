@@ -1,13 +1,37 @@
-# Compiled python modules.
+# Byte-compiled / optimized / DLL files
+__pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Setuptools distribution folder.
-/dist/
+# C extensions
+*.so
 
-# Python egg metadata, regenerated from source files by setuptools.
-/*.egg-info
+# Distribution / packaging
+.eggs/
+*.egg-info/
+build/
+dist/
 
-# pytest temp dirs
-.pytest_cache
-__pycache__
-.eggs
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+.cache/
+.tox/
+
+# Go binaries and artifacts
+go/pim_calc
+pim_calc
+
+# IDE and OS files
+.DS_Store
+.vscode/
+.idea/
+
+# Local planning notes (not part of the repo)
+docs/plans/

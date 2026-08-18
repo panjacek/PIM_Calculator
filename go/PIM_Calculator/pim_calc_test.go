@@ -3,7 +3,7 @@ package PIM_Calculator_test
 import (
 	// "fmt"
     "testing"
-    "PIM_Calculator"
+    "github.com/panjacek/PIM_Calculator/go/PIM_Calculator"
 )
 
 func TestPIM(t *testing.T) {

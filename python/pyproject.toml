@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pim-calculator"
+version = "0.2"
+description = "Passive Intermodulation Calculator for RF antennas"
+readme = "README.md"
+requires-python = ">=3.6"
+license = { text = "Unlicense" }
+authors = [
+    { name = "Jacek Kreft" }
+]
+dependencies = [
+    "numpy>=1.13.3",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-mock",
+    "pytest-cov",
+    "scipy",
+    "matplotlib>=2.0",
+]
+gui = [
+    "PySide6",
+    "scipy>=1.0",
+    "matplotlib>=2.0",
+]
+
+[project.scripts]
+PIM_Calculator = "PIM_Calculator.pim_calc:main"
+PIM_GUI_Calculator = "PIM_Calculator.pimQt:main"
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-mock",
+    "pytest-cov",
+    "ruff",
+    "scipy",
+    "matplotlib>=2.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["PIM_Calculator/tests"]
+python_files = ["test_pim_calc.py"]

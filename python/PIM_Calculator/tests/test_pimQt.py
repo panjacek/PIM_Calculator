@@ -1,9 +1,7 @@
-import logging
 
 import pytest
-from PySide2 import QtCore, QtWidgets
 
-from PIM_Calculator.pimQt import MainWindow, ScrollMessageBox
+from PIM_Calculator.pimQt import MainWindow
 
 
 @pytest.fixture
@@ -14,7 +12,7 @@ def main_window(mocker, qtbot, xvfb):
     return main_window
 
 
-class TestpimQt(object):
+class TestpimQt:
     def test_MainWindow_init(self, qtbot, main_window, xvfb):
         qtbot.addWidget(main_window)
         main_window.initUI.assert_called_once_with()

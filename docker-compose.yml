@@ -1,0 +1,24 @@
+services:
+  cli:
+    build:
+      context: .
+      dockerfile: python/Dockerfile
+      target: base
+    image: pim_calc_cli
+    volumes:
+      - .:/app
+
+  gui:
+    build:
+      context: .
+      dockerfile: python/Dockerfile
+      target: gui
+    image: pim_calc_gui
+    environment:
+      - DISPLAY=${DISPLAY}
+    devices:
+      - /dev/dri/card0
+    volumes:
+      - .:/app
+      - /tmp/.X11-unix:/tmp/.X11-unix
+

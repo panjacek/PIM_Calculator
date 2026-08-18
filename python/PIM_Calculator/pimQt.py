@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
 
 import logging
 import sys
-from itertools import cycle
 
-from PySide2 import QtCore, QtWidgets
+try:
+    from PySide6 import QtCore, QtWidgets
+except ImportError:
+    from PySide2 import QtCore, QtWidgets
 
 from PIM_Calculator.pim_calc import PIMCalc
 
@@ -15,15 +15,18 @@ plt = None
 try:
     import matplotlib
 
-    matplotlib.use("Qt5Agg")
+    matplotlib.use("QtAgg")
     import matplotlib.pyplot as plt
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+    try:
+        from matplotlib.backends.backend_qt6agg import FigureCanvasQTAgg as FigureCanvas
+    except ImportError:
+        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
 
     plt.style.use("bmh")
     import numpy as np
     from scipy.interpolate import interp1d
-    from scipy.interpolate import splrep as spline
 except ImportError:
     print("no plotting.. :/")
     raise
@@ -60,10 +63,28 @@ class PIMCanvas(FigureCanvas):
 
         # Shapes:
         shape_im = np.array(
-            [0.2, 0.4, 0.50, 0.55, 0.58, 0.6, 0.6, 0.6, 0.6, 0.6, 0.58, 0.55, 0.50, 0.4, 0.2]
+            [
+                0.2,
+                0.4,
+                0.50,
+                0.55,
+                0.58,
+                0.6,
+                0.6,
+                0.6,
+                0.6,
+                0.6,
+                0.58,
+                0.55,
+                0.50,
+                0.4,
+                0.2,
+            ]
         )
 
-        shape_crr = np.array([0.2, 0.5, 0.9, 0.99, 1, 1, 1, 1, 1, 1, 1, 0.99, 0.9, 0.5, 0.2])
+        shape_crr = np.array(
+            [0.2, 0.5, 0.9, 0.99, 1, 1, 1, 1, 1, 1, 1, 0.99, 0.9, 0.5, 0.2]
+        )
         # plot RX vs IM
         # if isinstance(data[0], tuple):
         if "RX" in plot_name:
@@ -77,9 +98,9 @@ class PIMCanvas(FigureCanvas):
                 y = np.outer(shape_im, np.ones(len(x))).ravel()
                 y = y[:: int(len(y) / len(x))]
                 x2 = np.linspace(x.min(), x.max(), num=124)
-                y = spline(x, y, x2)
+                y = interp1d(x, y, kind="cubic")(x2)
 
-                self.axes.plot(x2, y, label="IM Cf={0}".format(x_cf), alpha=0.60, lw="3")
+                self.axes.plot(x2, y, label=f"IM Cf={x_cf}", alpha=0.60, lw="3")
 
                 rx_cf = rx[0] + (rx[1] - rx[0]) / 2
                 if rx_cf not in rx_present:
@@ -90,9 +111,9 @@ class PIMCanvas(FigureCanvas):
                     y = np.outer(shape_crr, np.ones(len(rx))).ravel()
                     y = y[:: int(len(y) / len(rx))]
                     rx2 = np.linspace(rx.min(), rx.max(), num=124)
-                    y = spline(rx, y, rx2, order=2)
+                    y = interp1d(rx, y, kind="quadratic")(rx2)
 
-                    self.axes.plot(rx2, y, label="RX Cf={0}".format(rx_cf), alpha=0.8, lw="3")
+                    self.axes.plot(rx2, y, label=f"RX Cf={rx_cf}", alpha=0.8, lw="3")
                     rx_present.append(rx_cf)
                 self.axes.legend()
             self.draw()
@@ -108,9 +129,9 @@ class PIMCanvas(FigureCanvas):
             y = np.outer(shape_im, np.ones(len(x))).ravel()
             y = y[:: int(len(y) / len(x))]
             x2 = np.linspace(x.min(), x.max(), num=124)
-            y = spline(x, y, x2)
+            y = interp1d(x, y, kind="cubic")(x2)
 
-            self.axes.plot(x2, y, label="IM Cf={0}".format(x_cf), alpha=0.60, lw="3")
+            self.axes.plot(x2, y, label=f"IM Cf={x_cf}", alpha=0.60, lw="3")
             """self.axes.bar(x, y,
                           label="Cf={0}".format(x[0]+(x[-1]-x[0])/2),
                           alpha=0.60,
@@ -174,7 +195,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("-- PIM Calculator --")
 
         self.file_menu = QtWidgets.QMenu("&File", self)
-        self.file_menu.addAction("&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
+        self.file_menu.addAction(
+            "&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q
+        )
         self.menuBar().addMenu(self.file_menu)
 
         self.help_menu = QtWidgets.QMenu("&Help", self)
@@ -218,16 +241,13 @@ class MainWindow(QtWidgets.QMainWindow):
         grid_main.addLayout(grid, 0, 0, 1, 4)
         grid.setSpacing(5)
 
-        yPos = 0
-        xPos = 0
         # Add labels to grid
-        for l in range(0, len(self.labels)):
-            if (yPos == 0) or (yPos == 3) or (yPos == 6):
+        for l in range(len(self.labels)):
+            if l % 3 == 0:
                 x = 1
             else:
                 x = 0
             grid.addWidget(self.labels[l], l, x)
-            yPos += 1
         # Add edit fields
         yPos = 1
         for l in self.fields:
@@ -249,7 +269,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @staticmethod
     def _convert_list(items):
-        """ Convert string params into lists """
+        """Convert string params into lists"""
 
         if not isinstance(items, str):
             items = str(items)
@@ -286,7 +306,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         box = ScrollMessageBox(text_obj)
         box.setWindowTitle("PIM Calculator Results")
-        result = box.exec_()
+        box.exec_()
 
     def result_window(self, item, item_name="Results"):
         item.setWindowTitle(item_name)
@@ -294,7 +314,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.windows.append(item)
 
     def on_calculate_click(self):
-        """ Method to call on calculate click """
+        """Method to call on calculate click"""
 
         tx_list = self._convert_list(self.fields[0].text())
         tx_bandwith = self._convert_list(self.fields[1].text())
@@ -346,18 +366,18 @@ class MainWindow(QtWidgets.QMainWindow):
                 text_result.append("{0} is inside: {1}".format(pim[0], pim[1]))
         """
         text_result = "\n".join(text_result)
-        self.show_results(text_result, plot_results, plot_im, im_data=im_result, rx_data=rx_result)
+        self.show_results(
+            text_result, plot_results, plot_im, im_data=im_result, rx_data=rx_result
+        )
 
     def about(self):
         QtWidgets.QMessageBox.about(
             self,
             "About",
-            """PIM Calculator
+            f"""PIM Calculator
 This program is a simple GUI for Passive InterModulation Calculation.
-versio={0}
-""".format(
-                VERSION
-            ),
+versio={VERSION}
+""",
         )
 
 
@@ -373,7 +393,7 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet("QMessageBox { messagebox-text-interaction-flags: 5; }")
 
-    main = MainWindow()
+    MainWindow()
     # Ensure the execution stops correctly
     sys.exit(app.exec_())
 
