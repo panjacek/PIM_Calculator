@@ -31,9 +31,9 @@ make run-python-cli CALC_ARGS="2152,1932 -r 1752,1900"
 make test-integration                    # prove all three flavours agree
 ```
 
-Requires: [uv](https://docs.astral.sh/uv/) (Python 3.14 is pinned via
-`.python-version` and fetched automatically), Go >= 1.25 for the go flavour,
-the Mojo toolchain for the mojo flavour.
+Requires: [uv](https://docs.astral.sh/uv/) (Python >= 3.12 required; 3.14 is
+pinned via `.python-version` and fetched automatically), Go >= 1.25 for the
+go flavour, the Mojo toolchain for the mojo flavour.
 
 ## CLI usage
 
@@ -69,6 +69,17 @@ JSON output (identical schema in all flavours):
 }
 ```
 
+## GUI (optional)
+
+The Qt GUI is an extra — the CLI and library work without it:
+
+```bash
+pip install "pim-calculator[gui]"    # users: pulls PySide6, scipy, matplotlib
+make run-python-gui                  # dev shortcut (uv sync --extra gui)
+```
+
+Core install (`pip install pim-calculator`) needs only numpy.
+
 ## Make targets
 
 Run `make help` for the full annotated list. The essentials:
@@ -78,6 +89,8 @@ Run `make help` for the full annotated list. The essentials:
 - `make test-perf` - performance benchmarks (`pytest-benchmark`; SVG
   histograms + JSON report land in `python/.benchmarks/`)
 - `make lint` / `make format` - linters / auto-format for all flavours
+- `make sync` - upgrade dep versions & re-lock/re-sync all flavours
+  (root uv env, python/, go/)
 - `make test-integration` - cross-flavour comparison (see [`docs/ci.md`](docs/ci.md))
 - `make run-python-cli CALC_ARGS="..."`, `make run-go-cli`,
   `make run-mojo-cli CALC_ARGS="..."` - the CLIs
