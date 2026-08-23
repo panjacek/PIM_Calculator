@@ -13,7 +13,7 @@ comptime USAGE = """usage: mojo run pim_calc.mojo TX_LIST [--tx_size LIST] [-r R
 
 
 def to_py_list(raw: String) raises -> PythonObject:
-    """'1900,1910' -> Python list of floats"""
+    """Convert '1900,1910' to a Python list of floats."""
     var result = Python.list()
     for part in raw.split(","):
         _ = result.append(atof(String(part)))

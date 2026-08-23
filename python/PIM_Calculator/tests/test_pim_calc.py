@@ -11,7 +11,6 @@ def pimc():
     return PIMCalc()
 
 
-@pytest.mark.script_launch_mode("subprocess")
 def test_main():
     sys.argv = ["pim_calc.py", "--help"]
     with pytest.raises(SystemExit):
