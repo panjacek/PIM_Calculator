@@ -1,4 +1,4 @@
-.PHONY: test test-unit test-perf test-gui lint format install run-cli run-gui clean
+.PHONY: test test-unit test-perf test-gui lint format install sync run-cli run-gui clean
 
 test: test-unit
 
@@ -25,6 +25,10 @@ format:
 
 install:
 	uv pip install -e .
+
+sync:
+	uv lock --project . --upgrade
+	uv sync --project . --group dev
 
 run-cli:
 ifeq ($(USE_MOJO),1)

@@ -1,4 +1,4 @@
-.PHONY: help test test-unit test-integration test-perf test-python test-python-unit test-python-gui test-go test-mojo lint lint-tests lint-python lint-go lint-mojo format format-python format-mojo format-tests format-go build-go install run-python-cli run-python-gui run-go-cli run-mojo-cli clean
+.PHONY: help test test-unit test-integration test-perf test-python test-python-unit test-python-gui test-go test-mojo lint lint-tests lint-python lint-go lint-mojo format format-python format-mojo format-tests format-go build-go install sync sync-root sync-python sync-go run-python-cli run-python-gui run-go-cli run-mojo-cli clean
 
 help: ## Show available targets
 	@awk -F ':.*?## ' '/^#########/ {printf "\n%s\n", $$0} /^[a-zA-Z_-]+:.*?## / {printf "%-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -61,6 +61,20 @@ format-tests: ## ruff format on tests/
 
 format-go: ## gofmt
 	$(MAKE) -C go format
+
+######### SYNC #########
+
+sync: sync-root sync-python sync-go ## Upgrade dep versions & re-sync all flavours
+
+sync-root:
+	uv lock --upgrade
+	uv sync --group dev
+
+sync-python:
+	$(MAKE) -C python sync
+
+sync-go:
+	$(MAKE) -C go sync
 
 ######### BUILD / INSTALL #########
 

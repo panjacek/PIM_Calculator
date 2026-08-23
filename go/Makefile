@@ -1,4 +1,4 @@
-.PHONY: all test lint format build run-cli clean
+.PHONY: all test lint format build run-cli sync clean
 
 all: build
 
@@ -14,6 +14,10 @@ format:
 
 build:
 	go build -o pim_calc PIM_Calculator.go
+
+sync:
+	go get -u ./...
+	go mod tidy
 
 run-cli: build
 	./pim_calc -tx_band "5,5" 1980,1940

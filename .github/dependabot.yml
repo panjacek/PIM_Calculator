@@ -1,0 +1,45 @@
+version: 2
+
+updates:
+  # root dev env (mojo toolchain, editable pim-calculator)
+  - package-ecosystem: uv
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      uv-root:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "fix(deps)"
+
+  # python reference implementation
+  - package-ecosystem: uv
+    directory: "/python"
+    schedule:
+      interval: weekly
+    groups:
+      uv-python:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "fix(deps)"
+
+  # go CLI port (go.mod has no deps yet; future-proof)
+  - package-ecosystem: gomod
+    directory: "/go"
+    schedule:
+      interval: weekly
+    groups:
+      gomod-go:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "fix(deps)"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci(deps)"
