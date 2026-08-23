@@ -43,20 +43,36 @@ Runs all three CLIs on one canonical case:
 TX = 2152,1932   RX = 1752,1900   bands default (5 MHz)
 ```
 
-and asserts that each output contains every expected PIM frequency:
-`1492 1712 1932 2152 2372 2592` (IM3 set plus IM5-only values).
+Each CLI writes its results via `--output_file` as JSON (shared schema,
+see `python/PIM_Calculator/pim_calc.py::results_to_json`):
 
-This is a smoke-level comparison: it catches computation drift between
-flavours without parsing each tool's distinct output format.
+```json
+{
+  "tx_list": [2152.0, 1932.0],
+  "rx_list": [1752.0, 1900.0],
+  "IM3": [{"cf": 1712.0, "min": 1704.5, "max": 1719.5}],
+  "IM5": [{"cf": 1492.0, "min": 1479.5, "max": 1504.5}]
+}
+```
+
+The test (`tests/test_integration.py`, plain pytest) then asserts:
+
+1. each flavour's IM centre-frequency set equals the known truth for this
+   case: `{1492, 1712, 1932, 2152, 2372, 2592}` MHz
+   (IM3 set plus IM5-only values), and
+2. all three flavours agree with each other.
+
+This catches missing values *and* spurious extras — any computation drift
+between flavours fails with the exact diff.
 
 ## Local reproduction
 
 Everything CI runs is a Makefile target:
 
 ```bash
-uv sync --extra dev        # root env: mojo toolchain + editable pim-calculator
+uv sync --group dev                        # root env: mojo toolchain + editable pim-calculator + pytest/ruff
 uv sync --project python --group dev       # python env (add --extra gui for GUI)
-make lint                  # ruff + go vet + mblack
+make lint                  # ruff (python/, mojo/, tests/) + go vet
 make test-python-unit      # fast unit tests
 make test-python-gui       # GUI tests (needs a display or xvfb-run)
 make test-go
@@ -75,7 +91,11 @@ make build-go
 Note the go CLI requires every band list explicitly (`-tx_band`, `-rx_band`);
 the python/mojo CLIs auto-expand a missing band default to 5 MHz per carrier.
 
-All three must print the same IM3/IM5 tables.
+Or just run the whole comparison as CI does:
+
+```bash
+make test-integration
+```
 
 ## Environment notes
 

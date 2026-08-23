@@ -15,8 +15,10 @@
 
 ## Commands
 
-- `make test` — all suites (python/go/mojo)
-- `make lint` — ruff on python/ and mojo/
+- `make help` — list all targets with descriptions
+- `make test` — all unit suites (python/go/mojo)
+- `make lint` — ruff on python/, mojo/, tests/ + go vet
+- `make test-integration` — cross-flavour comparison (builds go binary, runs tests/test_integration.py)
 - `make run-python-cli`, `make run-go-cli`, `make run-mojo-cli CALC_ARGS="..."` — CLIs
 - `uv sync --group dev` — rebuild .venv
 

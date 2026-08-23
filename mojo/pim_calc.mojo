@@ -3,12 +3,13 @@ from std.python import Python, PythonObject
 from std.sys import argv
 
 comptime USAGE = """usage: mojo run pim_calc.mojo TX_LIST [--tx_size LIST] [-r RX_LIST]
-                              [--rx_size LIST]
+                              [--rx_size LIST] [--output_file PATH]
 
   TX_LIST   comma separated TX carriers in MHz, e.g. 1900,1910
   --tx_size TX carrier bandwidths in MHz [5,...]
   -r        RX carriers in MHz, e.g. 1915
-  --rx_size RX carrier bandwidths in MHz"""
+  --rx_size RX carrier bandwidths in MHz
+  --output_file write results as JSON (same schema as python flavour)"""
 
 
 def to_py_list(raw: String) raises -> PythonObject:
@@ -37,6 +38,23 @@ def find_flag(args: List[String], flag: String) -> String:
     return ""
 
 
+def write_output(
+    mod: PythonObject,
+    calc: PythonObject,
+    tx_list: PythonObject,
+    tx_size: PythonObject,
+    rx_list: PythonObject,
+    path: String,
+) raises:
+    """Write results as JSON using the python lib's shared serializer."""
+    var builtins = Python.import_module("builtins")
+    var fh = builtins.open(path, "w")
+    _ = fh.write(
+        mod.results_to_json(calc.calculate(tx_list, tx_size), tx_list, rx_list)
+    )
+    _ = fh.close()
+
+
 def main() raises:
     var raw_args = argv()
     var args = List[String]()
@@ -60,6 +78,7 @@ def main() raises:
         rx_raw = find_flag(args, "--rx_list")
 
     var calc = mod.PIMCalc()
+    var out_raw = find_flag(args, "--output_file")
 
     if rx_raw != "":
         var rx_list = to_py_list(rx_raw)
@@ -70,7 +89,11 @@ def main() raises:
         var result = calc.get_results(tx_list, tx_size, rx_list, rx_size)
         var newline = PythonObject("\n")
         print(newline.join(result[0]))
+        if out_raw != "":
+            write_output(mod, calc, tx_list, tx_size, rx_list, out_raw)
     else:
         var result = calc.get_results(tx_list, tx_size)
         var newline = PythonObject("\n")
         print(newline.join(result[0]))
+        if out_raw != "":
+            write_output(mod, calc, tx_list, tx_size, Python.list(), out_raw)

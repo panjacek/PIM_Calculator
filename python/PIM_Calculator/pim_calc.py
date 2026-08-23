@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import json
 import logging
 import os
 import pprint
@@ -249,6 +250,39 @@ class PIMCalc:
         return text_result, pim_result, rx_result
 
 
+def results_to_json(im_result, tx_list, rx_list):
+    """Serialize PIM calculation results to a JSON string.
+
+    Shared output contract across the python/go/mojo flavours:
+
+        {"tx_list": [...], "rx_list": [...],
+         "im3": [{"cf": .., "min": .., "max": ..}, ...],
+         "im5": [...]}
+
+    Args:
+        im_result: tuple as returned by PIMCalc.calculate()
+        tx_list: List of TX carriers in MHz
+        rx_list: List of RX carriers in MHz or None
+    """
+    im_name = cycle(["IM3", "IM5"]).__next__
+    tables = {}
+    for im, im_full in im_result:
+        tables[im_name()] = [
+            {
+                "cf": float(im["IM"][i]),
+                "min": float(im_full[i][0]),
+                "max": float(im_full[i][1]),
+            }
+            for i in range(len(im))
+        ]
+    payload = {
+        "tx_list": [float(x) for x in tx_list],
+        "rx_list": [float(x) for x in rx_list] if rx_list is not None else [],
+        **tables,
+    }
+    return json.dumps(payload, indent=2)
+
+
 def read_args():
     """Method to parse the given arguments
 
@@ -265,6 +299,11 @@ def read_args():
     parser.add_argument("-r", "--rx_list", help="List of RX Carriers")
     parser.add_argument(
         "--rx_size", dest="rx_size", help="List of RX Carriers bands [5MHz]"
+    )
+    parser.add_argument(
+        "--output_file",
+        dest="output_file",
+        help="Write results table to this file",
     )
     parser.add_argument(
         "--log_lvl",
@@ -309,6 +348,7 @@ def read_args():
         "rx_list": rx_list,
         "rx_size": rx_size,
         "log_lvl": args.log_lvl,
+        "output_file": args.output_file,
     }
 
     return setup_dict
@@ -337,9 +377,17 @@ def main():
     logger.info(f"Using RX Carriers:{rx_list}")
     logger.info(f"Using RX Carriers:{rx_size}")
 
-    _text_result, _im_result, _rx_result = pimc.get_results(
+    _text_result, _pim_result, _rx_result = pimc.get_results(
         tx_list, tx_size, rx_list, rx_size
     )
+
+    if setup_dict["output_file"]:
+        with open(setup_dict["output_file"], "w") as fh:
+            fh.write(
+                results_to_json(pimc.calculate(tx_list, tx_size), tx_list, rx_list)
+                + "\n"
+            )
+
     sys.exit(0)
 
 

@@ -1,4 +1,3 @@
-
 import pytest
 
 from PIM_Calculator.pimQt import MainWindow

@@ -1,4 +1,4 @@
-.PHONY: test test-unit test-gui lint install run-cli run-gui clean
+.PHONY: test test-unit test-gui lint format install run-cli run-gui clean
 
 test: test-unit
 
@@ -10,6 +10,9 @@ test-gui:
 
 lint:
 	uv run ruff check .
+
+format:
+	uv run ruff format .
 
 install:
 	uv pip install -e .

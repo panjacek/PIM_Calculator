@@ -129,23 +129,5 @@ jobs:
         run: uv sync --group dev
       - name: Build go CLI
         run: make build-go
-      - name: Run all three CLIs on canonical case (TX 2152,1932 / RX 1752,1900)
-        run: |
-          set -euo pipefail
-          ( cd python && uv run --project . PIM_Calculator 2152,1932 --rx_list=1752,1900 ) > /tmp/python.out
-          ./go/pim_calc -tx_band "5,5" -rx_list "1752,1900" -rx_band "5,5" 2152,1932 > /tmp/go.out
-          ( cd mojo && uv run mojo run -I . pim_calc.mojo 2152,1932 -r 1752,1900 ) > /tmp/mojo.out
-      - name: Compare computed PIM frequencies across flavours
-        run: |
-          set -euo pipefail
-          EXPECTED="1492 1712 1932 2152 2372 2592"
-          status=0
-          for f in /tmp/python.out /tmp/go.out /tmp/mojo.out; do
-            for v in $EXPECTED; do
-              if ! grep -q "$v" "$f"; then
-                echo "::error::${f}: expected IM frequency ${v} MHz missing"
-                status=1
-              fi
-            done
-          done
-          exit $status
+      - name: Cross-flavour comparison (TX 2152,1932 / RX 1752,1900)
+        run: make test-integration
