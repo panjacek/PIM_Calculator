@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 
+from __future__ import annotations
+
 import logging
 import sys
+from typing import Any
 
 try:
-    from PySide6 import QtCore, QtWidgets
+    from PySide6 import QtCore, QtGui, QtWidgets
 except ImportError:
-    from PySide2 import QtCore, QtWidgets
+    from PySide2 import QtCore, QtGui, QtWidgets
 
-from PIM_Calculator.pim_calc import PIMCalc
+from PIM_Calculator.pim_calc import FloatArray, ImHit, PIMCalc
 
 # try to import plotting
-plt = None
+plt: Any = None
 try:
     import matplotlib
 
@@ -39,7 +42,13 @@ VERSION = "0.2"
 class PIMCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
-    def __init__(self, parent=None, width=6, height=4, dpi=100):
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget | None = None,
+        width: float = 6,
+        height: float = 4,
+        dpi: float = 100,
+    ) -> None:
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         self.compute_initial_figure()
@@ -52,10 +61,10 @@ class PIMCanvas(FigureCanvas):
         )
         FigureCanvas.updateGeometry(self)
 
-    def compute_initial_figure(self):
+    def compute_initial_figure(self) -> None:
         plt.style.use("bmh")
 
-    def update_figure(self, data, plot_name=""):
+    def update_figure(self, data: Any, plot_name: str = "") -> None:
         self.axes.cla()
         self.axes.set_title(plot_name)
         self.axes.set_ylabel("Power Normalized")
@@ -144,12 +153,12 @@ class PIMCanvas(FigureCanvas):
 
 
 class PIMPlot(QtWidgets.QWidget):
-    def __init__(self, item):
+    def __init__(self, item: Any) -> None:
         QtWidgets.QWidget.__init__(self)
 
 
 class ScrollMessageBox(QtWidgets.QMessageBox):
-    def __init__(self, widgets, *args, **kwargs):
+    def __init__(self, widgets: Any, *args: Any, **kwargs: Any) -> None:
         QtWidgets.QMessageBox.__init__(self, *args, **kwargs)
 
         scroll = QtWidgets.QScrollArea(self)
@@ -171,25 +180,27 @@ class ScrollMessageBox(QtWidgets.QMessageBox):
 
 # TODO: add slots and signals
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
+    ui_mock: Any
+
+    def __init__(self) -> None:
         QtWidgets.QMainWindow.__init__(self)
         # super(MainWindow, self).__init__()
         # elements
-        self.labels = []
-        self.fields = []
-        self.chk_box = []
-        self.windows = []
+        self.labels: list[QtWidgets.QLabel] = []
+        self.fields: list[QtWidgets.QLineEdit] = []
+        self.chk_box: list[QtWidgets.QCheckBox] = []
+        self.windows: list[QtWidgets.QWidget] = []
         self.initUI()
 
-    def fileQuit(self):
+    def fileQuit(self) -> None:
         for wind in self.windows:
             wind.close()
         self.close()
 
-    def closeEvent(self, ce):
+    def closeEvent(self, ce: QtGui.QCloseEvent) -> None:
         self.fileQuit()
 
-    def initUI(self):
+    def initUI(self) -> None:
         # MENUS
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("-- PIM Calculator --")
@@ -268,22 +279,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show()
 
     @staticmethod
-    def _convert_list(items):
+    def _convert_list(items: str) -> list[float]:
         """Convert string params into lists"""
 
-        if not isinstance(items, str):
-            items = str(items)
+        text = items if isinstance(items, str) else str(items)
 
-        if "," in items:
-            items = [float(x) for x in items.strip().split(",")]
-        else:
-            items = [float(items)]
+        if "," in text:
+            return [float(x) for x in text.strip().split(",")]
+        return [float(text)]
 
-        return items
-
-    def show_results(self, results, plot_results, plot_im, im_data=None, rx_data=None):
+    def show_results(
+        self,
+        results: str,
+        plot_results: bool,
+        plot_im: bool,
+        im_data: list[tuple[str, FloatArray]],
+        rx_data: list[tuple[str, list[ImHit]]],
+    ) -> None:
         # box = QtWidgets.QMessageBox()
-        items = []
+        items: list[Any] = []
         text_obj = QtWidgets.QTextBrowser(self)
         text_obj.setText(results)
         # items.append(text_obj)
@@ -294,12 +308,12 @@ class MainWindow(QtWidgets.QMainWindow):
                     pim_plots.update_figure(im_full, plot_name=im)
                     items.append([im, pim_plots])
 
-            for im, im_full in rx_data:
+            for rx_name, rx_hits in rx_data:
                 pim_plots = PIMCanvas()
                 # call the plots only if there is something to show
-                if len(im_full) > 0:
-                    pim_plots.update_figure(im_full, plot_name=im)
-                    items.append([im, pim_plots])
+                if len(rx_hits) > 0:
+                    pim_plots.update_figure(rx_hits, plot_name=rx_name)
+                    items.append([rx_name, pim_plots])
 
             for w in items:
                 self.result_window(w[1], item_name=w[0])
@@ -308,12 +322,14 @@ class MainWindow(QtWidgets.QMainWindow):
         box.setWindowTitle("PIM Calculator Results")
         box.exec_()
 
-    def result_window(self, item, item_name="Results"):
+    def result_window(
+        self, item: QtWidgets.QWidget, item_name: str = "Results"
+    ) -> None:
         item.setWindowTitle(item_name)
         item.show()
         self.windows.append(item)
 
-    def on_calculate_click(self):
+    def on_calculate_click(self) -> None:
         """Method to call on calculate click"""
 
         tx_list = self._convert_list(self.fields[0].text())
@@ -365,12 +381,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 pimc.logger.warning("{0} is inside: {1}".format(pim[0], pim[1]))
                 text_result.append("{0} is inside: {1}".format(pim[0], pim[1]))
         """
-        text_result = "\n".join(text_result)
+        text_out = "\n".join(text_result)
         self.show_results(
-            text_result, plot_results, plot_im, im_data=im_result, rx_data=rx_result
+            text_out, plot_results, plot_im, im_data=im_result, rx_data=rx_result
         )
 
-    def about(self):
+    def about(self) -> None:
         QtWidgets.QMessageBox.about(
             self,
             "About",
@@ -381,7 +397,7 @@ versio={VERSION}
         )
 
 
-def main():
+def main() -> None:
     # setup logger
     console = logging.StreamHandler()
     console.setLevel("DEBUG")

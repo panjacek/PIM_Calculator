@@ -1,22 +1,33 @@
+from __future__ import annotations
+
+from typing import Any, cast
+from unittest.mock import MagicMock
+
 import pytest
+from pytest_mock import MockerFixture
 
 from PIM_Calculator.pimQt import MainWindow
 
 
 @pytest.fixture
-def main_window(mocker, qtbot, xvfb):
-    ui_mock = mocker.patch("PIM_Calculator.pimQt.MainWindow.initUI")
+def main_window(qtbot: Any, mocker: MockerFixture, xvfb: Any) -> MainWindow:
+    ui_mock: MagicMock = mocker.patch("PIM_Calculator.pimQt.MainWindow.initUI")
     main_window = MainWindow()
     main_window.ui_mock = ui_mock
     return main_window
 
 
 class TestpimQt:
-    def test_MainWindow_init(self, qtbot, main_window, xvfb):
+    def test_MainWindow_init(
+        self, qtbot: Any, main_window: MainWindow, xvfb: Any
+    ) -> None:
         qtbot.addWidget(main_window)
-        main_window.initUI.assert_called_once_with()
+        init_ui_mock = cast(MagicMock, main_window.initUI)
+        init_ui_mock.assert_called_once_with()
 
-    def test_MainWindow_initUI(self, qtbot, mocker, xvfb):
+    def test_MainWindow_initUI(
+        self, qtbot: Any, mocker: MockerFixture, xvfb: Any
+    ) -> None:
         window = MainWindow()
         qtbot.addWidget(window)
 
@@ -31,15 +42,19 @@ class TestpimQt:
         # check file menus
         assert window.file_menu is not None
 
-    def test_MainWindow_closeEvent(self, qtbot, main_window, mocker, xvfb):
+    def test_MainWindow_closeEvent(
+        self, qtbot: Any, main_window: MainWindow, mocker: MockerFixture, xvfb: Any
+    ) -> None:
         qtbot.addWidget(main_window)
-        file_quit = mocker.patch.object(main_window, "fileQuit")
+        file_quit: MagicMock = mocker.patch.object(main_window, "fileQuit")
         main_window.closeEvent("XX")
         file_quit.assert_called_once_with()
 
-    def test_MainWindow_fileQuit(self, qtbot, main_window, mocker, xvfb):
+    def test_MainWindow_fileQuit(
+        self, qtbot: Any, main_window: MainWindow, mocker: MockerFixture, xvfb: Any
+    ) -> None:
         qtbot.addWidget(main_window)
-        exit = mocker.patch.object(main_window, "close")
+        exit: MagicMock = mocker.patch.object(main_window, "close")
         wind1_mock = mocker.Mock()
         wind2_mock = mocker.Mock()
         main_window.windows = [wind1_mock, wind2_mock]

@@ -1,22 +1,38 @@
 #!/usr/bin/env python
 
+from __future__ import annotations
+
 import argparse
 import json
 import logging
 import os
 import pprint
 import sys
+from collections.abc import Sequence
 from itertools import cycle
+from typing import Any
 
 import numpy as np
+
+type PimTable = np.ndarray[tuple[int, ...], np.dtype[Any]]
+type FloatArray = np.ndarray[tuple[int, ...], np.dtype[np.floating[Any]]]
+type ImHit = tuple[list[float], np.ndarray, np.ndarray]
+type CalculateResult = tuple[tuple[PimTable, FloatArray], tuple[PimTable, FloatArray]]
+
+IM3_TABLE_DTYPE = np.dtype(
+    [("IM", float), ("IM_COMP", float, (3,)), ("IM_FULL", float, (2,))]
+)
+IM5_TABLE_DTYPE = np.dtype(
+    [("IM", float), ("IM_COMP", float, (5,)), ("IM_FULL", float, (2,))]
+)
 
 
 class PIMCalc:
     """PIM calculator class"""
 
-    logger = None
+    logger: logging.Logger = None  # type: ignore[assignment]
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -27,11 +43,11 @@ class PIMCalc:
         if os.getenv("USE_MOJO") == "1":
             self.logger.info("USE_MOJO=1 set: Running with Mojo acceleration engine")
 
-    def get_im_full(self, cf, pim_size):
+    def get_im_full(self, cf: float, pim_size: float) -> list[float]:
         """Get full size if PIM"""
         return [cf - pim_size / 2.0, cf + pim_size / 2.0]
 
-    def get_im(self, tx_list):
+    def get_im(self, tx_list: Sequence[float]) -> float | None:
         """Calculate Center Frequency of intermodulation from given frequencies
         Args:
             tx_list: list of frequencies
@@ -41,8 +57,14 @@ class PIMCalc:
             return tx_list[0] + tx_list[1] - tx_list[2]
         if len(tx_list) == 5:
             return tx_list[0] + tx_list[1] + tx_list[2] - tx_list[3] - tx_list[4]
+        return None
 
-    def calculate(self, tx_list, tx_bandwith=None, max_order=5):
+    def calculate(
+        self,
+        tx_list: Sequence[float],
+        tx_bandwith: Sequence[float] | None = None,
+        max_order: int = 5,
+    ) -> CalculateResult:
         """Method to calculate PIM based on list of TX carriers.
 
         Args:
@@ -57,23 +79,19 @@ class PIMCalc:
             raise TypeError
 
         # set default bandwith to 5MHz (LTE5)
-        if tx_bandwith is None:
-            tx_bandwith = np.array([5 for x in tx_list])
-
-        if len(tx_bandwith) != len(tx_list):
+        bands = (
+            np.array([5.0 for _ in tx_list])
+            if tx_bandwith is None
+            else np.array(tx_bandwith, dtype=float)
+        )
+        if len(bands) != len(tx_list):
             logger.error("Lenght of tx_list != tx_bandwith!")
             logger.warning("Assuming all of them are same as first")
-            tx_bandwith = np.array([tx_bandwith[0] for x in tx_list])
+            bands = np.array([bands[0] for _ in tx_list])
 
         # initialize numpy arrays
-        im3 = np.zeros(
-            shape=[len(tx_list) ** 3],
-            dtype=([("IM", float), ("IM_COMP", float, (3,)), ("IM_FULL", float, (2,))]),
-        )
-        im5 = np.zeros(
-            shape=[len(tx_list) ** 5],
-            dtype=([("IM", float), ("IM_COMP", float, (5,)), ("IM_FULL", float, (2,))]),
-        )
+        im3 = np.zeros(shape=[len(tx_list) ** 3], dtype=IM3_TABLE_DTYPE)
+        im5 = np.zeros(shape=[len(tx_list) ** 5], dtype=IM5_TABLE_DTYPE)
         im3_cnt = 0
         im5_cnt = 0
 
@@ -83,7 +101,7 @@ class PIMCalc:
             for j in range(i, len(tx_list)):
                 for k in range(len(tx_list)):
                     im_order_cnt = 3
-                    im3_band_tmp = sum([tx_bandwith[x] for x in [i, j, k]])
+                    im3_band_tmp = sum([bands[x] for x in [i, j, k]])
                     tx_items = [tx_list[x] for x in [i, j, k]]
                     if len(np.unique(tx_items)) > 0:
                         im3_comp_temp = np.array(tx_items)
@@ -100,9 +118,7 @@ class PIMCalc:
                     for l in range(j, len(tx_list)):
                         for m in range(k, len(tx_list)):
                             im_order_cnt = 5
-                            im5_band_tmp = sum(
-                                [tx_bandwith[x] for x in [i, j, k, l, m]]
-                            )
+                            im5_band_tmp = sum([bands[x] for x in [i, j, k, l, m]])
                             tx_items = [tx_list[x] for x in [i, j, l, k, m]]
                             if len(np.unique(tx_items)) > 1:
                                 im5_comp_temp = np.array(tx_items)
@@ -117,8 +133,8 @@ class PIMCalc:
         im5 = self._clean_array(im5)
         return (im3, im3["IM_FULL"]), (im5, im5["IM_FULL"])
 
-    def _clean_array(self, input_arr):
-        to_clean = []
+    def _clean_array(self, input_arr: PimTable) -> PimTable:
+        to_clean: list[int] = []
         self.logger.debug(pprint.pformat(input_arr))
         input_arr = np.unique(input_arr, axis=0)
         self.logger.debug(pprint.pformat(input_arr))
@@ -134,7 +150,9 @@ class PIMCalc:
         self.logger.debug("====")
         return input_arr
 
-    def _clean_arrays(self, im, im_full):
+    def _clean_arrays(
+        self, im: PimTable, im_full: FloatArray
+    ) -> tuple[PimTable, FloatArray]:
         # logger.error(im)
         im_full = im_full[im_full[:, 0].argsort()]
         self.logger.debug(f"IM_FULL:{pprint.pformat(im_full)}")
@@ -149,19 +167,26 @@ class PIMCalc:
         self.logger.debug(f"IM_FULL:{pprint.pformat(im_full)}")
         return im, im_full
 
-    def check_rx(self, rx_list, pim_list, rx_bandwith=None):
+    def check_rx(
+        self,
+        rx_list: Sequence[float],
+        pim_list: PimTable,
+        rx_bandwith: Sequence[float] | None = None,
+    ) -> list[ImHit]:
         """check if given rx is affected by PIM"""
 
-        if rx_bandwith is None:
-            rx_bandwith = [5 for x in rx_list]
-
-        if len(rx_bandwith) != len(rx_list):
+        bands = (
+            np.array([5 for _ in rx_list])
+            if rx_bandwith is None
+            else np.array(rx_bandwith, dtype=float)
+        )
+        if len(bands) != len(rx_list):
             self.logger.error("Lenght of rx_list != rx_bandwith!")
             self.logger.warning("Assuming all of them are same as first")
-            rx_bandwith = np.array([rx_bandwith[0] for x in rx_list])
+            bands = np.array([bands[0] for _ in rx_list])
 
-        im_hits = []
-        for x, x_band in zip(rx_list, rx_bandwith):
+        im_hits: list[ImHit] = []
+        for x, x_band in zip(rx_list, bands):
             rx_min = x - x_band / 2.0
             rx_max = x + x_band / 2.0
             rx_wide = [rx_min, rx_max]
@@ -190,8 +215,13 @@ class PIMCalc:
         return im_hits
 
     def get_results(
-        self, tx_list, tx_bandwith, rx_list=None, rx_bandwith=None, show_src=True
-    ):
+        self,
+        tx_list: Sequence[float],
+        tx_bandwith: Sequence[float],
+        rx_list: Sequence[float] | None = None,
+        rx_bandwith: Sequence[float] | None = None,
+        show_src: bool = True,
+    ) -> tuple[list[str], list[tuple[str, FloatArray]], list[tuple[str, list[ImHit]]]]:
         """Wrapper to calculate PIM and check rx hits in one go
         Args:
             tx_list: List of TX carriers in MHz
@@ -206,11 +236,11 @@ class PIMCalc:
         """
 
         im_result = self.calculate(tx_list, tx_bandwith)
-        text_result = []
+        text_result: list[str] = []
         im_name = cycle(["IM3", "IM5"]).__next__
 
-        pim_result = []
-        rx_result = []
+        pim_result: list[tuple[str, FloatArray]] = []
+        rx_result: list[tuple[str, list[ImHit]]] = []
         for im, im_full in im_result:
             name = im_name()
             self.logger.info(48 * "=")
@@ -243,14 +273,18 @@ class PIMCalc:
             im_type = rx_res[0]
             self.logger.warning(f"===== {im_type} =====")
             text_result.append(f"===== {im_type} =====")
-            for pim in rx_res[1]:
-                self.logger.warning(f"{pim[0]} is inside: {pim[1]}, TX src: {pim[2]}")
-                text_result.append(f"{pim[0]} is inside: {pim[1]}, TX src: {pim[2]}")
+            for hit in rx_res[1]:
+                self.logger.warning(f"{hit[0]} is inside: {hit[1]}, TX src: {hit[2]}")
+                text_result.append(f"{hit[0]} is inside: {hit[1]}, TX src: {hit[2]}")
 
         return text_result, pim_result, rx_result
 
 
-def results_to_json(im_result, tx_list, rx_list):
+def results_to_json(
+    im_result: CalculateResult,
+    tx_list: Sequence[float],
+    rx_list: Sequence[float] | None,
+) -> str:
     """Serialize PIM calculation results to a JSON string.
 
     Shared output contract across the python/go/mojo flavours:
@@ -265,7 +299,7 @@ def results_to_json(im_result, tx_list, rx_list):
         rx_list: List of RX carriers in MHz or None
     """
     im_name = cycle(["IM3", "IM5"]).__next__
-    tables = {}
+    tables: dict[str, list[dict[str, float]]] = {}
     for im, im_full in im_result:
         tables[im_name()] = [
             {
@@ -283,7 +317,12 @@ def results_to_json(im_result, tx_list, rx_list):
     return json.dumps(payload, indent=2)
 
 
-def read_args():
+def _parse_freq_list(raw: str) -> list[float]:
+    """Parse a comma-separated CLI frequency/bandwidth list into floats."""
+    return [float(x) for x in raw.strip().split(",")] if "," in raw else [float(raw)]
+
+
+def read_args() -> dict[str, Any]:
     """Method to parse the given arguments
 
     Returns:
@@ -315,32 +354,24 @@ def read_args():
     # args, leftovers = parser.parse_known_args()
     args = parser.parse_args()
 
-    tx_list = args.tx_list
-    if "," in tx_list:
-        tx_list = [float(x) for x in tx_list.strip().split(",")]
-    else:
-        tx_list = [float(tx_list)]
+    tx_list: list[float] = _parse_freq_list(args.tx_list)
 
-    rx_list = None
+    rx_list: list[float] | None = None
     if args.rx_list is not None:
-        rx_list = args.rx_list
-        if "," in rx_list:
-            rx_list = [float(x) for x in rx_list.strip().split(",")]
-        else:
-            rx_list = [float(rx_list)]
+        rx_list = _parse_freq_list(args.rx_list)
 
-    tx_size = None
+    tx_size: list[float]
     if args.tx_size is None:
-        tx_size = [5.0 for x in range(len(tx_list))]
+        tx_size = [5.0 for _ in tx_list]
     else:
-        tx_size = [float(x) for x in args.tx_size.strip().split(",")]
+        tx_size = _parse_freq_list(args.tx_size)
 
-    rx_size = None
+    rx_size: list[float] | None = None
     if rx_list is not None:
         if args.rx_size is None:
-            rx_size = [5.0 for x in range(len(rx_list))]
+            rx_size = [5.0 for _ in rx_list]
         else:
-            rx_size = [float(x) for x in args.rx_size.strip().split(",")]
+            rx_size = _parse_freq_list(args.rx_size)
 
     setup_dict = {
         "tx_list": tx_list,
@@ -354,7 +385,7 @@ def read_args():
     return setup_dict
 
 
-def main():
+def main() -> None:
     setup_dict = read_args()
 
     # setup logger

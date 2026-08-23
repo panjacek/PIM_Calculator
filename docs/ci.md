@@ -5,14 +5,29 @@ Single workflow: `.github/workflows/ci.yml`. Triggers: push to `main`, PRs to
 
 ## Job graph
 
-```
-python-lint (ruff)  ──┬──> python-gui (xvfb, PySide6) ──┐
-python-unit (pytest) ─┘                                │
-                       └──> python-perf (benchmarks)   │
-go-lint (go vet) ───────────────────────────┐          │
-go-test ────────────────────────────────────┼──────────┼──> integration
-mojo-lint (mblack) ──> mojo-test ───────────┘          │    (3 CLIs, one case)
-                        (also needs python-lint+unit)  │
+```mermaid
+flowchart LR
+    pl["python-lint<br/>(ruff + mypy + bandit)"]
+    pu["python-unit<br/>(pytest)"]
+    pg["python-gui<br/>(xvfb, PySide6)"]
+    pp["python-perf<br/>(benchmarks)"]
+    gl["go-lint<br/>(go vet)"]
+    gt["go-test"]
+    ml["mojo-lint<br/>(mblack)"]
+    mt["mojo-test<br/>(CPython interop)"]
+    ig["integration<br/>(3 CLIs, one case)"]
+
+    pl --> pg
+    pu --> pg
+    pl --> pp
+    pu --> pp
+    ml --> mt
+    pl --> mt
+    pu --> mt
+    pg --> ig
+    gl --> ig
+    gt --> ig
+    mt --> ig
 ```
 
 - `python-lint`, `python-unit`, `go-lint`, `go-test`, `mojo-lint` start
@@ -29,7 +44,7 @@ mojo-lint (mblack) ──> mojo-test ───────────┘       
 
 | Job         | What it does                                              |
 |-------------|-----------------------------------------------------------|
-| python-lint | `make lint-python` (ruff)                                 |
+| python-lint | `make lint-python` (ruff+mypy+bandit) + `make lint-tests` (ruff+mypy) |
 | python-unit | `make test-python-unit` (pytest, GUI tests excluded)      |
 | python-gui  | `xvfb-run make test-python-gui` (PySide6 under Xvfb)      |
 | python-perf | `make test-perf` (pytest-benchmark; uploads SVG/JSON artifacts) |
@@ -76,7 +91,8 @@ Everything CI runs is a Makefile target:
 ```bash
 uv sync --group dev                        # root env: mojo toolchain + editable pim-calculator + pytest/ruff
 uv sync --project python --group dev       # python env (add --extra gui for GUI)
-make lint                  # ruff (python/, mojo/, tests/) + go vet
+make lint                  # python: ruff+mypy+bandit, tests: ruff+mypy,
+                           # mojo: mblack, go: go vet
 make test-python-unit      # fast unit tests
 make test-python-gui       # GUI tests (needs a display or xvfb-run)
 make test-perf             # performance benchmarks (histograms + JSON in python/.benchmarks/)

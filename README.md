@@ -89,6 +89,7 @@ Run `make help` for the full annotated list. The essentials:
 - `make test-perf` - performance benchmarks (`pytest-benchmark`; SVG
   histograms + JSON report land in `python/.benchmarks/`)
 - `make lint` / `make format` - linters / auto-format for all flavours
+  (python side: ruff + mypy + bandit)
 - `make sync` - upgrade dep versions & re-lock/re-sync all flavours
   (root uv env, python/, go/)
 - `make test-integration` - cross-flavour comparison (see [`docs/ci.md`](docs/ci.md))

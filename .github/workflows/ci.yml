@@ -14,7 +14,7 @@ concurrency:
 jobs:
   # --- flavour: python -----------------------------------------------------
   python-lint:
-    name: python / lint (ruff)
+    name: python / lint (ruff + mypy + bandit)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -22,8 +22,12 @@ jobs:
       - uses: astral-sh/setup-uv@v7
       - name: Sync python env
         run: uv sync --project python --group dev
-      - name: Ruff
+      - name: Lint python package (ruff, mypy, bandit)
         run: make lint-python
+      - name: Lint shared tests (ruff, mypy)
+        run: |
+          uv sync --group dev
+          make lint-tests
 
   python-unit:
     name: python / unit tests

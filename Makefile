@@ -34,7 +34,7 @@ test-mojo: ## Mojo test suite (needs mojo toolchain)
 
 lint: lint-python lint-go lint-mojo lint-tests ## Run all linters
 
-lint-python: ## Ruff on python/
+lint-python: ## Ruff, mypy and bandit on python/
 	$(MAKE) -C python lint
 
 lint-go: ## go vet
@@ -43,8 +43,9 @@ lint-go: ## go vet
 lint-mojo: ## mblack on mojo/
 	$(MAKE) -C mojo lint
 
-lint-tests: ## Ruff on tests/
+lint-tests: ## Ruff + mypy on tests/
 	uv run ruff check tests
+	uv run mypy tests
 
 ######### FORMAT #########
 
