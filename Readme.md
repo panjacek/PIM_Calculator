@@ -1,7 +1,10 @@
-PIM Calculator
-==============
+# PIM Calculator
 
-Calculate PIM for RF antennas
+Passive Intermodulation calculator for RF antenna systems. Computes IM3/IM5
+mixing products of multiple TX carriers, including their occupied bandwidth,
+and checks whether they land inside an RX band (FDD uplink desense).
+Implemented in three interchangeable flavours that are kept in lockstep by a
+cross-flavour integration test in CI.
 
 [![CI](https://github.com/panjacek/PIM_Calculator/actions/workflows/ci.yml/badge.svg)](https://github.com/panjacek/PIM_Calculator/actions/workflows/ci.yml)
 
@@ -9,12 +12,10 @@ Calculate PIM for RF antennas
 
 [Passive Intermodulation](https://en.wikipedia.org/wiki/Passive_intermodulation):
 unwanted mixing products created when multiple strong TX carriers pass through
-a non-linear passive component (antenna, connector). This tool computes the
-IM3/IM5 products and checks if they land inside an RX band (FDD). Details:
+a non-linear passive component (antenna, connector). Details and formulas:
 [`docs/pim.md`](docs/pim.md).
 
-Three flavours:
-===============
+## Flavours
 
 | flavour | directory | description |
 | ------- | --------- | ----------- |
@@ -22,69 +23,80 @@ Three flavours:
 | Go      | `go/`     | Standalone CLI port, no external dependencies |
 | Mojo    | `mojo/`   | Wrapper around the Python library via CPython interop |
 
-All three share the same core math (see [`docs/pim.md`](docs/pim.md)).
+## Quick start
 
-CLI usage (same arguments for python and mojo flavours):
-========================================================
+```bash
+uv sync --group dev                      # root env: mojo + editable python package
+make run-python-cli CALC_ARGS="2152,1932 -r 1752,1900"
+make test-integration                    # prove all three flavours agree
+```
 
-**pim_calc** [-h] [--tx_size TX_SIZE] [-r RX_LIST] [--rx_size RX_SIZE]
-             [--log_lvl LOG_LVL]
-             tx_list
+Requires: [uv](https://docs.astral.sh/uv/) (Python 3.14 is pinned via
+`.python-version` and fetched automatically), Go >= 1.25 for the go flavour,
+the Mojo toolchain for the mojo flavour.
 
-Calculates PIM for RF antennas with FDD
+## CLI usage
 
-| positional | description |
-| ---------- | ----------- |
-| tx_list    | List of TX Carriers |
+Same arguments for the python and mojo flavours:
 
+```
+pim_calc [-h] [--tx_size TX_SIZE] [-r RX_LIST] [--rx_size RX_SIZE]
+         [--output_file OUTPUT_FILE] [--log_lvl LOG_LVL]
+         tx_list
+```
 
-| optional argument | description |
-| ----------------- | ----------- |
-| -h, --help        | show this help message and exit |
-| --tx_size TX_SIZE | List of TX Carriers bands [5MHz] |
-| -r RX_LIST, --rx_list RX_LIST | List of RX Carriers |
-| --rx_size RX_SIZE | List of RX Carriers bands [5MHz] |
+| argument | description |
+| -------- | ----------- |
+| tx_list (positional) | List of TX carriers, e.g. `2152,1932` |
+| --tx_size TX_SIZE | TX carrier bandwidths in MHz [5 per carrier] |
+| -r RX_LIST, --rx_list RX_LIST | List of RX carriers |
+| --rx_size RX_SIZE | RX carrier bandwidths in MHz [5 per carrier] |
+| --output_file PATH | Write results as JSON (schema below) |
 | --log_lvl LOG_LVL | logger level to display [INFO] |
 
-Example:
+The go flavour uses flags instead:
+`pim_calc -tx_band "5,5" -rx_list "1752,1900" -rx_band "5,5" 2152,1932`
+(band lists are always explicit there — no auto-expansion).
 
-    make run-python-cli CALC_ARGS="1900,1910 -r 1915"
+JSON output (identical schema in all flavours):
 
-Makefile Usage:
-===============
+```json
+{
+  "tx_list": [2152.0, 1932.0],
+  "rx_list": [1752.0, 1900.0],
+  "IM3": [{"cf": 1712.0, "min": 1704.5, "max": 1719.5}],
+  "IM5": [{"cf": 1492.0, "min": 1479.5, "max": 1504.5}]
+}
+```
 
-You can use `make` from the root directory (`make help` lists all targets):
+## Make targets
 
-- `make test` - Run all test suites (python/go/mojo)
-- `make lint` - Run linters for all flavours (ruff / go vet / mblack)
-- `make test-integration` - Cross-flavour comparison (see `docs/ci.md`)
-- `make test-python-unit` - Python unit tests (GUI tests excluded)
-- `make test-python-gui` - Python Qt GUI tests (needs a display or xvfb-run)
-- `make run-python-cli CALC_ARGS="..."` - Execute Python CLI
-- `make run-python-gui` - Execute Qt GUI
-- `make run-go-cli` - Execute Go CLI
-- `make run-mojo-cli CALC_ARGS="..."` - Execute Mojo wrapper CLI
-- `make build-go` - Build Go binary
-- `make install` - Install the Python package in editable mode using `uv`
-- `make clean` - Clean build and cache files
+Run `make help` for the full annotated list. The essentials:
 
-Development environment
-=======================
+- `make test` - all unit suites (python/go/mojo)
+- `make lint` / `make format` - linters / auto-format for all flavours
+- `make test-integration` - cross-flavour comparison (see [`docs/ci.md`](docs/ci.md))
+- `make run-python-cli CALC_ARGS="..."`, `make run-go-cli`,
+  `make run-mojo-cli CALC_ARGS="..."` - the CLIs
+- `make build-go`, `make install`, `make clean`
+
+## Development environment
 
 Root `pyproject.toml` defines a uv-managed dev environment with the Mojo
 toolchain, the editable `pim-calculator` package, pytest and ruff:
 
-    uv sync --group dev
+```bash
+uv sync --group dev
+```
 
-Mojo toolchain is installed as described in https://mojolang.org/install/
-(`uv pip install mojo`, version pinned in `pyproject.toml`).
+Mojo toolchain: https://mojolang.org/install/ (installed as the pinned
+`mojo==1.0.0` dependency of the root project).
 
-Documentation
-=============
+## Documentation
 
-- [`docs/pim.md`](docs/pim.md) - What PIM is, which products are computed,
+- [`docs/pim.md`](docs/pim.md) - what PIM is, which products are computed,
   how RX hit checks work
 - [`docs/ci.md`](docs/ci.md) - CI pipeline: job graph, integration test case,
-  how to reproduce locally
-- [`docs/versioning.md`](docs/versioning.md) - Semver strategy exploration
+  local reproduction
+- [`docs/versioning.md`](docs/versioning.md) - semver strategy exploration
   for the three flavours
