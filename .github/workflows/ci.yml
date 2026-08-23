@@ -168,4 +168,5 @@ jobs:
         with:
           name: benchmark-results
           path: python/.benchmarks/
+          include-hidden-files: true
           if-no-files-found: warn
