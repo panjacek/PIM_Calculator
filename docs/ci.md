@@ -14,8 +14,9 @@ flowchart LR
     gl["go-lint<br/>(go vet)"]
     gt["go-test"]
     ml["mojo-lint<br/>(mblack)"]
-    mt["mojo-test<br/>(CPython interop)"]
-    ig["integration<br/>(3 CLIs, one case)"]
+    mt["mojo-test<br/>(pure + interop)"]
+    ig["integration<br/>(4 CLIs, one case)"]
+    bn["binaries<br/>(go + mojo CLIs)"]
 
     pl --> pg
     pu --> pg
@@ -28,6 +29,7 @@ flowchart LR
     gl --> ig
     gt --> ig
     mt --> ig
+    ig --> bn
 ```
 
 - `python-lint`, `python-unit`, `go-lint`, `go-test`, `mojo-lint` start
@@ -39,6 +41,12 @@ flowchart LR
 - `python-perf` runs parallel to the other flavours: benchmarks only need the
   python lib, no timing gates. Gated on `python-lint` + `python-unit`.
 - `integration` needs all flavour jobs green (`python-perf` runs independently).
+- `binaries` runs last: once everything is green (integration included) it
+  runs `make build`, which lands all artifacts in the shared `dist/` directory
+  (`pim_calc-go`, `pim_calc-mojo-pure`, wheel + sdist), and uploads them as
+  the `packages-linux-amd64` run artifact (14-day retention — temp storage;
+  a future tag-driven workflow will turn these into a proper GitHub Release /
+  PyPI upload). It is also the only CI job that compiles the pure mojo CLI.
 
 ## Jobs
 
@@ -51,8 +59,9 @@ flowchart LR
 | go-lint     | `make lint-go` (`go vet`)                                 |
 | go-test     | `make test-go`                                            |
 | mojo-lint   | `make lint-mojo` (mblack)                                 |
-| mojo-test   | `make test-mojo` (Mojo TestSuite via CPython interop)     |
+| mojo-test   | `make test-mojo` (Mojo TestSuite, pure + CPython interop) |
 | integration | see below                                                 |
+| binaries    | `make build` (go/mojo CLIs + python wheel/sdist); stages and uploads the `packages-linux-amd64` artifact, 14-day retention |
 
 ### Integration job
 
@@ -105,12 +114,16 @@ Integration case by hand:
 ```bash
 make build-go
 ( cd python && uv run --project . PIM_Calculator 2152,1932 --rx_list=1752,1900 )
-./go/pim_calc -tx_band "5,5" -rx_list "1752,1900" -rx_band "5,5" 2152,1932
-( cd mojo && uv run mojo run -I . pim_calc.mojo 2152,1932 -r 1752,1900 )
+./dist/pim_calc-go -tx_band "5,5" -rx_list "1752,1900" -rx_band "5,5" 2152,1932
+( cd mojo && uv run mojo run -I . pim_calc_py.mojo 2152,1932 -r 1752,1900 )
+( cd mojo && uv run mojo run -I . cli.mojo 2152,1932 -r 1752,1900 )
 ```
 
 Note the go CLI requires every band list explicitly (`-tx_band`, `-rx_band`);
 the python/mojo CLIs auto-expand a missing band default to 5 MHz per carrier.
+The mojo directory has two flavours: `pim_calc_py.mojo` is the CPython-interop
+wrapper around the python library; `cli.mojo` (+ `pim_calc.mojo`) is the pure
+native port with zero Python imports.
 
 Or just run the whole comparison as CI does:
 

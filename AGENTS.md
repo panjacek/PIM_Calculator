@@ -10,7 +10,7 @@
 
 - `python/` — reference implementation (PIMCalc class, CLI, Qt GUI, pytest)
 - `go/` — standalone CLI port
-- `mojo/` — Python interop wrapper (calls python lib via CPython bridge)
+- `mojo/` — pure native port (`pim_calc.mojo`, `cli.mojo`) plus CPython-interop wrapper (`*_py.mojo`); `run-mojo-cli` builds & runs the compiled binary
 - `docs/plans/` — implementation plans live here (one md file per plan)
 - root `pyproject.toml` — dev env (mojo + editable pim-calculator + pytest/ruff), managed with uv
 
@@ -28,4 +28,5 @@
 - Ruff: N999 ignored (module naming), E741 ignored (i,j,k,l,m carrier indices are domain convention)
 - Python lint stack: ruff + mypy + bandit (`make lint-python`, `make lint-tests`); mypy config in both pyprojects, PySide6/scipy/qt backends stubs via overrides
 - Public python API is fully typed (PEP 695 type aliases in pim_calc.py); keep new code annotated
-- Go binary `go/pim_calc` is build artifact, gitignored
+- All build artifacts land in root `dist/` (gitignored): `pim_calc-go`,
+  `pim_calc-mojo-pure`, python wheel + sdist; removed by `make clean`

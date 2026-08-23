@@ -17,23 +17,36 @@ a non-linear passive component (antenna, connector). Details and formulas:
 
 ## Flavours
 
-| flavour | directory | description |
-| ------- | --------- | ----------- |
-| Python  | `python/` | Reference implementation: PIMCalc class, CLI, Qt GUI, pytest suite |
-| Go      | `go/`     | Standalone CLI port, no external dependencies |
-| Mojo    | `mojo/`   | Wrapper around the Python library via CPython interop |
+Each flavour is a self-contained implementation of the same calculator —
+pick whichever fits your environment; you do **not** need all of them.
+
+| flavour | directory | description | requires |
+| ------- | --------- | ----------- | -------- |
+| Python  | `python/` | Reference implementation: PIMCalc class, CLI, Qt GUI, pytest suite | [uv](https://docs.astral.sh/uv/) only (Python >= 3.12) |
+| Go      | `go/`     | Standalone CLI port, no external dependencies | Go >= 1.25 |
+| Mojo    | `mojo/`   | Pure native port plus a wrapper around the Python library via CPython interop | [uv](https://docs.astral.sh/uv/) only (Mojo toolchain comes with the root dev env) |
+
+CI keeps all flavours in lockstep via a cross-flavour integration test, but
+locally nothing forces you to build more than one: no Go on your host simply
+means you skip the `go/` flavour and its make targets.
 
 ## Quick start
 
 ```bash
-uv sync --group dev                      # root env: mojo + editable python package
+uv sync --group dev                      # root env: python package + mojo toolchain
 make run-python-cli CALC_ARGS="2152,1932 -r 1752,1900"
-make test-integration                    # prove all three flavours agree
+make run-mojo-cli CALC_ARGS="2152,1932 -r 1752,1900"   # pure mojo binary
 ```
 
-Requires: [uv](https://docs.astral.sh/uv/) (Python >= 3.12 required; 3.14 is
-pinned via `.python-version` and fetched automatically), Go >= 1.25 for the
-go flavour, the Mojo toolchain for the mojo flavour.
+Go flavour (only if you want it):
+
+```bash
+make run-go-cli CALC_ARGS="2152,1932 -r 1752,1900"     # builds dist/pim_calc-go first
+```
+
+Notes: Python >= 3.14 is pinned via `.python-version` and fetched
+automatically by uv. `make test` / `make lint` / `make test-integration`
+span every flavour and therefore need all toolchains installed.
 
 ## CLI usage
 
@@ -94,8 +107,11 @@ Run `make help` for the full annotated list. The essentials:
   (root uv env, python/, go/)
 - `make test-integration` - cross-flavour comparison (see [`docs/ci.md`](docs/ci.md))
 - `make run-python-cli CALC_ARGS="..."`, `make run-go-cli`,
-  `make run-mojo-cli CALC_ARGS="..."` - the CLIs
-- `make build-go`, `make install`, `make clean`
+  `make run-mojo-cli CALC_ARGS="..."` (pure Mojo, compiles a native binary
+  first; `run-mojo-py-cli` for the python-interop wrapper) - the CLIs
+- `make build` - build all packages: go/mojo CLI binaries + python wheel/sdist
+  (`make build-go`, `make build-mojo`, `make build-python` for individual
+  flavours), `make install`, `make clean`
 
 ## Development environment
 

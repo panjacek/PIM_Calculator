@@ -1,6 +1,6 @@
 [project]
 name = "pim-calculator-mojo"
-version = "0.3"
+version = "0.4"
 description = "Mojo integration environment for Passive Intermodulation Calculator"
 readme = "README.md"
 requires-python = ">=3.12"

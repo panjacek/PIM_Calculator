@@ -1,6 +1,6 @@
 """Cross-flavour smoke test: python/go/mojo must compute identical PIM sets.
 
-Runs all three CLIs on one canonical case (TX 2152,1932 / RX 1752,1900,
+Runs all four CLIs on one canonical case (TX 2152,1932 / RX 1752,1900,
 default 5 MHz bands), collecting each flavour's --output_file JSON and
 asserting:
 
@@ -57,12 +57,17 @@ def _rows(payload: dict, order: str) -> set[Row]:
 
 # Row counts differ by flavour semantics: python keeps duplicate-cf rows
 # when TX source components differ; go dedups by cf value only.
-EXPECTED_COUNTS = {"python": (4, 10), "go": (4, 6), "mojo": (4, 10)}
+EXPECTED_COUNTS = {
+    "python": (4, 10),
+    "go": (4, 6),
+    "mojo": (4, 10),
+    "mojo_pure": (4, 10),
+}
 
 
 @pytest.fixture(scope="module")
 def results(tmp_path_factory: pytest.TempPathFactory) -> dict[str, dict]:
-    """Run the three CLIs on the canonical case, parse their JSON output."""
+    """Run the four CLIs on the canonical case, parse their JSON output."""
     out = tmp_path_factory.mktemp("integration")
 
     _run(
@@ -80,7 +85,7 @@ def results(tmp_path_factory: pytest.TempPathFactory) -> dict[str, dict]:
     )
     _run(
         [
-            "./pim_calc",
+            str(ROOT / "dist" / "pim_calc-go"),
             "-tx_band",
             "5,5",
             "-rx_list",
@@ -91,7 +96,7 @@ def results(tmp_path_factory: pytest.TempPathFactory) -> dict[str, dict]:
             str(out / "go.json"),
             TX,
         ],
-        cwd=ROOT / "go",
+        cwd=ROOT,
     )
     _run(
         [
@@ -101,12 +106,29 @@ def results(tmp_path_factory: pytest.TempPathFactory) -> dict[str, dict]:
             "run",
             "-I",
             ".",
-            "pim_calc.mojo",
+            "pim_calc_py.mojo",
             TX,
             "-r",
             RX,
             "--output_file",
             str(out / "mojo.json"),
+        ],
+        cwd=ROOT / "mojo",
+    )
+    _run(
+        [
+            "uv",
+            "run",
+            "mojo",
+            "run",
+            "-I",
+            ".",
+            "cli.mojo",
+            TX,
+            "-r",
+            RX,
+            "--output_file",
+            str(out / "mojo_pure.json"),
         ],
         cwd=ROOT / "mojo",
     )
@@ -134,7 +156,7 @@ def test_flavours_agree(results: dict[str, dict]) -> None:
 def test_row_values_match_python(results: dict[str, dict]) -> None:
     """Band math must agree per row, not just at centre frequencies."""
     py_rows = {order: _rows(results["python"], order) for order in ("IM3", "IM5")}
-    for name in ("go", "mojo"):
+    for name in ("go", "mojo", "mojo_pure"):
         for order in ("IM3", "IM5"):
             assert _rows(results[name], order) == py_rows[order], (
                 f"{name}/{order} rows differ from python"
