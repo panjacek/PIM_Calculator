@@ -17,8 +17,8 @@ jobs:
     name: python / lint (ruff)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
       - name: Sync python env
         run: uv sync --project python --group dev
       - name: Ruff
@@ -28,15 +28,15 @@ jobs:
     name: python / unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
       - name: Sync python env
         run: uv sync --project python --group dev
       - name: Pytest (unit, with coverage)
         run: make test-python-unit
       - name: Upload coverage artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-python
           path: python/coverage.xml
@@ -47,10 +47,11 @@ jobs:
     name: go / lint (vet)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go/go.mod
+          cache: false
       - name: Go vet
         run: make lint-go
 
@@ -58,10 +59,11 @@ jobs:
     name: go / unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go/go.mod
+          cache: false
       - name: Go test
         run: make test-go
 
@@ -71,8 +73,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
       - name: Sync root env (mojo toolchain + pim-calculator)
         run: uv sync --group dev
       - name: mblack
@@ -85,8 +87,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
       - name: Sync python env (gui extras)
         run: uv sync --project python --extra gui
       - name: Install xvfb and Qt/XGL dependencies
@@ -109,8 +111,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
       - name: Sync root env (mojo toolchain + pim-calculator)
         run: uv sync --group dev
       - name: Mojo test suite
@@ -127,11 +129,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go/go.mod
+          cache: false
       - name: Sync root env (python lib + mojo toolchain)
         run: uv sync --group dev
       - name: Build go CLI
