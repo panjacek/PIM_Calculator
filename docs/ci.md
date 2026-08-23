@@ -21,8 +21,8 @@ mojo-lint (mblack) ──> mojo-test ───────────┘       
   `mojo-test` additionally waits for the python flavour to be lint-clean and
   unit-green first (mojo wraps the python library).
 - `python-gui` waits for the python flavour too (GUI tests are slow).
-- `python-perf` runs in parallel with everything: benchmarks only need the
-  python lib, no timing gates.
+- `python-perf` runs parallel to the other flavours: benchmarks only need the
+  python lib, no timing gates. Gated on `python-lint` + `python-unit`.
 - `integration` needs all seven jobs green.
 
 ## Jobs
