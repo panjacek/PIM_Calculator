@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import print_function
-
-import imp
-import logging
-import pprint
 import sys
 
 import numpy as np
@@ -17,7 +11,6 @@ def pimc():
     return PIMCalc()
 
 
-@pytest.mark.script_launch_mode("subprocess")
 def test_main():
     sys.argv = ["pim_calc.py", "--help"]
     with pytest.raises(SystemExit):
@@ -82,7 +75,7 @@ def test_calculate(pimc):
     test_im3 = np.array([1820.0, 1840.0, 1860.0, 1880.0])
     test_im5 = np.array([1800.0, 1820.0, 1840.0, 1860.0, 1880.0, 1900.0])
 
-    print("compare: {0} vs {1}".format(test_im3, im3[0]["IM"]))
+    print(f"compare: {test_im3} vs {im3[0]['IM']}")
     assert np.array_equal(test_im3, im3[0]["IM"]) is True
     assert np.array_equiv(test_im3, im3[0]["IM"]) is True
     assert np.allclose(test_im3, im3[0]["IM"]) is True
@@ -91,7 +84,7 @@ def test_calculate(pimc):
         assert x == y
 
     return
-    print("compare: {0} vs {1}".format(test_im5, im5[0]["IM"]))
+    print(f"compare: {test_im5} vs {im5[0]['IM']}")
     assert np.array_equal(test_im5, im5[0]["IM"]) is True
     assert np.array_equiv(test_im5, im5[0]["IM"]) is True
     assert np.allclose(test_im5, im5[0]["IM"]) is True
@@ -113,7 +106,6 @@ def test_calculate(pimc):
 def test_calculate_3rd_order(pimc):
     tx_list = [1840.0, 1860.0]
     tx_band = [10, 5.0]
-    rx_list = [1820.0, 1900.0, 1910.0]
 
     pim_list_5 = pimc.calculate(tx_list, tx_band, max_order=5)
     assert len(pim_list_5) == 2

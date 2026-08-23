@@ -1,7 +1,7 @@
 package main
 
 import (
-    "PIM_Calculator"
+    "github.com/panjacek/PIM_Calculator/go/PIM_Calculator"
 )
 
 func main(){

@@ -2,8 +2,10 @@ package PIM_Calculator
 
 import (
     //"os"
+    "encoding/json"
     "fmt"
     "log"
+    "os"
     "strconv"
     "strings"
     "flag"
@@ -19,6 +21,49 @@ type config struct {
 type im_results struct {
     IM []float32
     IM_full [][]float32
+}
+
+// pim_row matches the JSON output contract shared with the python flavour:
+// {"cf": <centre>, "min": <edge>, "max": <edge>}
+type pim_row struct {
+    Cf  float32 `json:"cf"`
+    Min float32 `json:"min"`
+    Max float32 `json:"max"`
+}
+
+// pim_output is the document written by --output_file.
+type pim_output struct {
+    Tx_list []float32 `json:"tx_list"`
+    Rx_list []float32 `json:"rx_list"`
+    IM3     []pim_row `json:"IM3"`
+    IM5     []pim_row `json:"IM5"`
+}
+
+func to_rows(im im_results) []pim_row {
+    rows := make([]pim_row, 0, len(im.IM))
+    for i := range im.IM {
+        rows = append(rows, pim_row{im.IM[i], im.IM_full[i][0], im.IM_full[i][1]})
+    }
+    return rows
+}
+
+// write_results serializes the PIM results as JSON, matching the
+// python flavour's --output_file schema (see PIM_Calculator.pim_calc).
+func write_results(path string, args_TX config, args_RX config, im3 im_results, im5 im_results) {
+    payload := pim_output{
+        Tx_list: args_TX.freq,
+        Rx_list: args_RX.freq,
+        IM3:     to_rows(im3),
+        IM5:     to_rows(im5),
+    }
+    data, err := json.MarshalIndent(payload, "", "  ")
+    if err != nil {
+        log.Printf("Error, cannot marshal results: %v", err)
+        return
+    }
+    if err := os.WriteFile(path, data, 0644); err != nil {
+        log.Printf("Error, cannot write output file %v: %v", path, err)
+    }
 }
 
 // divider print
@@ -46,10 +91,11 @@ func convert_arg(item string) ([]float32) {
 }
 
 // Read cmd line args
-func read_args() (config, config) {
+func read_args() (config, config, *string) {
     TX_band := flag.String("tx_band", "5,5", "List of TX bands")
     RX := flag.String("rx_list", "1900", "List of RXs")
     RX_band := flag.String("rx_band", "5", "List of RX bands")
+    out_file := flag.String("output_file", "", "Write PIM results to file")
 
     // Parse arguments
     flag.Parse()
@@ -63,7 +109,7 @@ func read_args() (config, config) {
     fmt.Println("TX_band = ", tx_band)
     fmt.Println("RX_list = ", rx_list)
     fmt.Println("RX_band = ", rx_band)
-    return config{tx_list, tx_band}, config{rx_list, rx_band}
+    return config{tx_list, tx_band}, config{rx_list, rx_band}, out_file
 }
 
 
@@ -200,9 +246,13 @@ func main() {
     fmt.Println("|\tThis is PIM Calculator")
     print_div("-", 80)
     // args := os.Args[1:]
-    args_TX, args_RX := read_args()
+    args_TX, args_RX, out_file := read_args()
 
     im3, im5 := Calculate(args_TX.freq, args_TX.band)
+
+    if *out_file != "" {
+        write_results(*out_file, args_TX, args_RX, im3, im5)
+    }
 
     fmt.Println("I've got this IM3:\n", im3)
     print_div("-", 80)
