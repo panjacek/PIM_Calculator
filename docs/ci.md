@@ -8,18 +8,18 @@ Single workflow: `.github/workflows/ci.yml`. Triggers: push to `main`, PRs to
 ```
 python-lint (ruff)  ──┬──> python-gui (xvfb, PySide6) ──┐
 python-unit (pytest) ─┘                                │
-mojo-lint (mblack) ─────────────────────────┐          │
-                                            ├──────────┼──> integration
-go-lint (go vet) ──┬────────────────────────│──────────┤    (3 CLIs, one case)
-go-test ───────────┴────────────────────────│──────────┤
-                                            │          │
-mojo-test (needs python-lint + python-unit) ┴──────────┘
+go-lint (go vet) ───────────────────────────┐          │
+go-test ────────────────────────────────────┼──────────┼──> integration
+mojo-lint (mblack) ──> mojo-test ───────────┘          │    (3 CLIs, one case)
+                       (also needs python-lint+unit)   │
 ```
 
 - `python-lint`, `python-unit`, `go-lint`, `go-test`, `mojo-lint` start
   immediately and run in parallel.
-- `python-gui` and `mojo-test` wait for the python flavour to be lint-clean
-  and unit-green first (mojo wraps the python library; GUI tests are slow).
+- `mojo-lint` feeds `mojo-unit`: unit tests only run on lint-clean mojo code.
+  `mojo-test` additionally waits for the python flavour to be lint-clean and
+  unit-green first (mojo wraps the python library).
+- `python-gui` waits for the python flavour too (GUI tests are slow).
 - `integration` needs all seven jobs green.
 
 ## Jobs

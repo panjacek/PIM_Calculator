@@ -94,10 +94,11 @@ jobs:
       - name: Pytest (gui under xvfb)
         run: xvfb-run --auto-servernum make test-python-gui
 
-  # Mojo wraps the python library: only build/test it against validated code.
+  # Mojo wraps the python library: only build/test it against validated code,
+  # and only after its own lint passes.
   mojo-test:
     name: mojo / unit tests
-    needs: [python-lint, python-unit]
+    needs: [mojo-lint, python-lint, python-unit]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
