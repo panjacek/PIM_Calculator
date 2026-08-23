@@ -19,6 +19,8 @@ test-gui:
 
 lint:
 	uv run ruff check .
+	uv run mypy PIM_Calculator
+	uv run bandit -r PIM_Calculator --exclude PIM_Calculator/tests
 
 format:
 	uv run ruff format .

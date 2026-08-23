@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 import numpy as np
@@ -7,11 +9,11 @@ from PIM_Calculator.pim_calc import PIMCalc, main
 
 
 @pytest.fixture
-def pimc():
+def pimc() -> PIMCalc:
     return PIMCalc()
 
 
-def test_main():
+def test_main() -> None:
     sys.argv = ["pim_calc.py", "--help"]
     with pytest.raises(SystemExit):
         main()
@@ -53,8 +55,8 @@ def test_main():
         main()
 
 
-def test_calculate(pimc):
-    tx_list = []
+def test_calculate(pimc: PIMCalc) -> None:
+    tx_list: list[float] = []
     with pytest.raises(TypeError):
         pim_list = pimc.calculate(tx_list)
 
@@ -93,8 +95,8 @@ def test_calculate(pimc):
         assert x == y
     print("IM calc Seems ok..")
 
-    im3_hits = pimc.check_rx(rx_list, im3[1])
-    im5_hits = pimc.check_rx(rx_list, im5[1])
+    im3_hits = pimc.check_rx(rx_list, im3[0])
+    im5_hits = pimc.check_rx(rx_list, im5[0])
 
     assert len(im3_hits) > 0
     assert len(im5_hits) > 0
@@ -103,7 +105,7 @@ def test_calculate(pimc):
     print(im5_hits)
 
 
-def test_calculate_3rd_order(pimc):
+def test_calculate_3rd_order(pimc: PIMCalc) -> None:
     tx_list = [1840.0, 1860.0]
     tx_band = [10, 5.0]
 
@@ -125,12 +127,14 @@ def test_calculate_3rd_order(pimc):
     assert len(pim_list_3[1][1]) == 0
 
     # compare pim3 with pim3 from two calculations
+    im3_table_3 = pim_list_3[0][0]
+    im3_table_5 = pim_list_5[0][0]
     for x in [0, 1]:
         assert np.array_equal(pim_list_3[0][x], pim_list_5[0][x]) is True
         assert np.array_equiv(pim_list_3[0][x], pim_list_5[0][x]) is True
         # check only for floats with Cf
         if x == 0:
-            assert np.allclose(pim_list_3[0][x]["IM"], pim_list_5[0][x]["IM"]) is True
+            assert np.allclose(im3_table_3["IM"], im3_table_5["IM"]) is True
 
         for item_3, item_5 in zip(pim_list_3[0][x], pim_list_5[0][x]):
             if x == 0:

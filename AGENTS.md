@@ -25,5 +25,7 @@
 
 - Default python: 3.14 (pinned via root `.python-version`, honoured by uv)
 - Mojo toolchain: install via `uv pip install mojo` (https://mojolang.org/install/), version pinned in pyproject.toml
-- Ruff: N999 ignored (module naming is project convention)
+- Ruff: N999 ignored (module naming), E741 ignored (i,j,k,l,m carrier indices are domain convention)
+- Python lint stack: ruff + mypy + bandit (`make lint-python`, `make lint-tests`); mypy config in both pyprojects, PySide6/scipy/qt backends stubs via overrides
+- Public python API is fully typed (PEP 695 type aliases in pim_calc.py); keep new code annotated
 - Go binary `go/pim_calc` is build artifact, gitignored
