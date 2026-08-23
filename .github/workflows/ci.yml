@@ -113,12 +113,9 @@ jobs:
   integration:
     name: integration / cross-flavour CLI comparison
     needs:
-      - python-lint
-      - python-unit
       - python-gui
       - go-lint
       - go-test
-      - mojo-lint
       - mojo-test
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -136,7 +133,7 @@ jobs:
         run: |
           set -euo pipefail
           ( cd python && uv run --project . PIM_Calculator 2152,1932 --rx_list=1752,1900 ) > /tmp/python.out
-          ./go/pim_calc -tx_band "5,5" -rx_list "1752,1900" 2152,1932 > /tmp/go.out
+          ./go/pim_calc -tx_band "5,5" -rx_list "1752,1900" -rx_band "5,5" 2152,1932 > /tmp/go.out
           ( cd mojo && uv run mojo run -I . pim_calc.mojo 2152,1932 -r 1752,1900 ) > /tmp/mojo.out
       - name: Compare computed PIM frequencies across flavours
         run: |

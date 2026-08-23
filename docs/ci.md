@@ -68,9 +68,12 @@ Integration case by hand:
 ```bash
 make build-go
 ( cd python && uv run --project . PIM_Calculator 2152,1932 --rx_list=1752,1900 )
-./go/pim_calc -tx_band "5,5" -rx_list "1752,1900" 2152,1932
+./go/pim_calc -tx_band "5,5" -rx_list "1752,1900" -rx_band "5,5" 2152,1932
 ( cd mojo && uv run mojo run -I . pim_calc.mojo 2152,1932 -r 1752,1900 )
 ```
+
+Note the go CLI requires every band list explicitly (`-tx_band`, `-rx_band`);
+the python/mojo CLIs auto-expand a missing band default to 5 MHz per carrier.
 
 All three must print the same IM3/IM5 tables.
 
