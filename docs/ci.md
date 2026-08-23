@@ -16,6 +16,7 @@ flowchart LR
     ml["mojo-lint<br/>(mblack)"]
     mt["mojo-test<br/>(pure + interop)"]
     ig["integration<br/>(4 CLIs, one case)"]
+    we["web-e2e<br/>(playwright)"]
     bn["binaries<br/>(go + mojo CLIs)"]
 
     pl --> pg
@@ -30,6 +31,10 @@ flowchart LR
     gt --> ig
     mt --> ig
     ig --> bn
+    pg --> we
+    gl --> we
+    gt --> we
+    mt --> we
 ```
 
 - `python-lint`, `python-unit`, `go-lint`, `go-test`, `mojo-lint` start
@@ -40,6 +45,9 @@ flowchart LR
 - `python-gui` waits for the python flavour too (GUI tests are slow).
 - `python-perf` runs parallel to the other flavours: benchmarks only need the
   python lib, no timing gates. Gated on `python-lint` + `python-unit`.
+- `web-e2e` runs parallel to `integration`: same gate (all flavour lints+units
+  green), builds its own go CLI so all four web engines execute under
+  playwright. `binaries` does not wait for it.
 - `integration` needs all flavour jobs green (`python-perf` runs independently).
 - `binaries` runs last: once everything is green (integration included) it
   runs `make build`, which lands all artifacts in the shared `dist/` directory
@@ -61,6 +69,7 @@ flowchart LR
 | mojo-lint   | `make lint-mojo` (mblack)                                 |
 | mojo-test   | `make test-mojo` (Mojo TestSuite, pure + CPython interop) |
 | integration | see below                                                 |
+| web-e2e     | `make test-web` (streamlit unit + playwright e2e; chromium install + `make build-go` in-job) |
 | binaries    | `make build` (go/mojo CLIs + python wheel/sdist); stages and uploads the `packages-linux-amd64` artifact, 14-day retention |
 
 ### Integration job
@@ -107,6 +116,11 @@ make test-python-gui       # GUI tests (needs a display or xvfb-run)
 make test-perf             # performance benchmarks (histograms + JSON in python/.benchmarks/)
 make test-go
 make test-mojo
+
+# web UI (unit + playwright e2e):
+uv sync --group dev --group web
+uv run --group dev --group web playwright install chromium
+make test-web
 ```
 
 Integration case by hand:

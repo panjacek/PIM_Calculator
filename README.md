@@ -109,6 +109,9 @@ Run `make help` for the full annotated list. The essentials:
 - `make run-python-cli CALC_ARGS="..."`, `make run-go-cli`,
   `make run-mojo-cli CALC_ARGS="..."` (pure Mojo, compiles a native binary
   first; `run-mojo-py-cli` for the python-interop wrapper) - the CLIs
+- `make run-web` - launch the streamlit web UI (all flavours via the shared
+  JSON contract); `make test-web` - its unit + playwright e2e tests
+  (one-time: `uv sync --group dev --group web && uv run --group dev --group web playwright install chromium`)
 - `make build` - build all packages: go/mojo CLI binaries + python wheel/sdist
   (`make build-go`, `make build-mojo`, `make build-python` for individual
   flavours), `make install`, `make clean`
