@@ -17,7 +17,7 @@
 ## Commands
 
 - `make help` — list all targets with descriptions
-- Full target reference: `Readme.md` ("Make targets"), CI details: `docs/ci.md`.
+- Full target reference: `README.md` ("Make targets"), CI details: `docs/ci.md`.
   Update those files when targets change — do not duplicate the list here.
 - `uv sync --group dev` — rebuild .venv
 
