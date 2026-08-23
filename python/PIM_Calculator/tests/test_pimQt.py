@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
+import PIM_Calculator.pimQt as pim_qt
 from PIM_Calculator.pimQt import MainWindow
 
 
@@ -47,7 +48,7 @@ class TestpimQt:
     ) -> None:
         qtbot.addWidget(main_window)
         file_quit: MagicMock = mocker.patch.object(main_window, "fileQuit")
-        main_window.closeEvent("XX")
+        main_window.closeEvent(pim_qt.QtGui.QCloseEvent())
         file_quit.assert_called_once_with()
 
     def test_MainWindow_fileQuit(
@@ -63,5 +64,5 @@ class TestpimQt:
         main_window.fileQuit()
 
         for wind in main_window.windows:
-            wind.close.assert_called_once_with()
+            cast(MagicMock, wind.close).assert_called_once_with()
         exit.assert_called_once_with()

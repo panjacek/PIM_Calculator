@@ -4,12 +4,20 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import Any
+from typing import Any, cast
 
 try:
     from PySide6 import QtCore, QtGui, QtWidgets
-except ImportError:
-    from PySide2 import QtCore, QtGui, QtWidgets
+except ImportError as exc:
+    sys.exit(
+        f"PIM_GUI_Calculator needs PySide6: {exc}\n"
+        "Python deps:   uv sync --project python --extra gui\n"
+        "System libs:   sudo apt-get install -y libglib2.0-0 libegl1 libgl1 "
+        "libfontconfig1 libdbus-1-3 libxkbcommon0 libxkbcommon-x11-0 "
+        "libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 "
+        "libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 "
+        "libxcb-xfixes0"
+    )
 
 from PIM_Calculator.pim_calc import FloatArray, ImHit, PIMCalc
 
@@ -30,9 +38,8 @@ try:
     plt.style.use("bmh")
     import numpy as np
     from scipy.interpolate import interp1d
-except ImportError:
-    print("no plotting.. :/")
-    raise
+except ImportError as exc:
+    sys.exit(f"PIM_GUI_Calculator needs the gui extra (matplotlib/scipy): {exc}")
 
 
 VERSION = "0.2"
@@ -57,7 +64,9 @@ class PIMCanvas(FigureCanvas):
         self.setParent(parent)
 
         FigureCanvas.setSizePolicy(
-            self, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+            self,
+            QtWidgets.QSizePolicy.Policy.Expanding,
+            QtWidgets.QSizePolicy.Policy.Expanding,
         )
         FigureCanvas.updateGeometry(self)
 
@@ -174,7 +183,8 @@ class ScrollMessageBox(QtWidgets.QMessageBox):
         for item in widgets:
             lay.addWidget(item)
 
-        self.layout().addWidget(scroll, 0, 0, 1, self.layout().columnCount())
+        box_lay = cast(QtWidgets.QGridLayout, self.layout())
+        box_lay.addWidget(scroll, 0, 0, 1, box_lay.columnCount())
         self.setStyleSheet("QScrollArea{min-width:640 px; min-height: 480px}")
 
 
@@ -202,12 +212,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def initUI(self) -> None:
         # MENUS
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle("-- PIM Calculator --")
 
         self.file_menu = QtWidgets.QMenu("&File", self)
         self.file_menu.addAction(
-            "&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q
+            "&Quit", self.fileQuit, QtCore.Qt.Modifier.CTRL | QtCore.Qt.Key.Key_Q
         )
         self.menuBar().addMenu(self.file_menu)
 
@@ -253,16 +263,16 @@ class MainWindow(QtWidgets.QMainWindow):
         grid.setSpacing(5)
 
         # Add labels to grid
-        for l in range(len(self.labels)):
-            if l % 3 == 0:
+        for idx in range(len(self.labels)):
+            if idx % 3 == 0:
                 x = 1
             else:
                 x = 0
-            grid.addWidget(self.labels[l], l, x)
+            grid.addWidget(self.labels[idx], idx, x)
         # Add edit fields
         yPos = 1
-        for l in self.fields:
-            grid.addWidget(l, yPos, 1)
+        for field in self.fields:
+            grid.addWidget(field, yPos, 1)
             if yPos == 2 or yPos == 5:
                 yPos += 1
             yPos += 1
@@ -272,7 +282,12 @@ class MainWindow(QtWidgets.QMainWindow):
         grid.addWidget(self.chk_box[1], 3, 4)
         grid.addWidget(self.chk_box[2], 4, 4)
 
-        self.setGeometry(500, 300, 400, 150)
+        screen = self.screen().availableGeometry()
+        self.resize(400, 150)
+        self.move(
+            screen.x() + (screen.width() - self.width()) // 2,
+            screen.y() + (screen.height() - self.height()) // 2,
+        )
 
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
@@ -320,7 +335,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         box = ScrollMessageBox(text_obj)
         box.setWindowTitle("PIM Calculator Results")
-        box.exec_()
+        box.exec()
 
     def result_window(
         self, item: QtWidgets.QWidget, item_name: str = "Results"
@@ -409,9 +424,10 @@ def main() -> None:
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet("QMessageBox { messagebox-text-interaction-flags: 5; }")
 
-    MainWindow()
-    # Ensure the execution stops correctly
-    sys.exit(app.exec_())
+    # keep a reference: unreferenced top-level QWidget is garbage-collected
+    # immediately, closing the window while app.exec() keeps running
+    main_window = MainWindow()  # noqa: F841
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

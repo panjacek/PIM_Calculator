@@ -33,18 +33,12 @@ sync:
 	uv sync --project . --group dev
 
 run-cli:
-ifeq ($(USE_MOJO),1)
-	uv run mojo run python/PIM_Calculator/pim_calc.mojo 2152,1932 --rx_list=1752,1900
-else
 	uv run --project . PIM_Calculator 2152,1932 --rx_list=1752,1900
-endif
 
 
 run-gui:
-	uv run --extra gui --project . PIM_GUI_Calculator
-
-run-mojo-cli:
-	PYTHONPATH=./python uv run ../.venv/bin/mojo run ../mojo/pim_calc.mojo 2152,1932 --rx_list=1752,1900
+	uv sync --extra gui --project .
+	LIBGL_ALWAYS_SOFTWARE=1 ./.venv/bin/PIM_GUI_Calculator
 
 
 

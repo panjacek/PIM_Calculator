@@ -67,4 +67,4 @@ def test_benchmark_check_rx(
 ) -> None:
     hits: list = benchmark(pimc.check_rx, RX_LIST, im3_pim_table)
 
-    assert isinstance(hits, list)
+    assert len(hits) == 416

@@ -55,6 +55,9 @@ testpaths = ["PIM_Calculator/tests"]
 python_files = ["test_pim_calc.py"]
 markers = ["benchmark: performance benchmarks"]
 
+[tool.coverage.run]
+omit = ["PIM_Calculator/tests/*"]
+
 [tool.ruff.lint]
 # E741: single-letter carrier indices (i,j,k,l,m) are domain convention
 #       in the intermodulation product loops.
