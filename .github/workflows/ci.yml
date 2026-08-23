@@ -32,8 +32,15 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Sync python env
         run: uv sync --project python --group dev
-      - name: Pytest (unit)
+      - name: Pytest (unit, with coverage)
         run: make test-python-unit
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-python
+          path: python/coverage.xml
+          if-no-files-found: warn
 
   # --- flavour: go ---------------------------------------------------------
   go-lint:
