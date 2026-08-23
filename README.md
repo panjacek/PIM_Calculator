@@ -73,7 +73,10 @@ JSON output (identical schema in all flavours):
 
 Run `make help` for the full annotated list. The essentials:
 
-- `make test` - all unit suites (python/go/mojo)
+- `make test` - all suites: unit (python/go/mojo) + integration + perf
+- `make test-unit` - unit suites only, fast loop
+- `make test-perf` - performance benchmarks (`pytest-benchmark`; SVG
+  histograms + JSON report land in `python/.benchmarks/`)
 - `make lint` / `make format` - linters / auto-format for all flavours
 - `make test-integration` - cross-flavour comparison (see [`docs/ci.md`](docs/ci.md))
 - `make run-python-cli CALC_ARGS="..."`, `make run-go-cli`,

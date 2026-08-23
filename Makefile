@@ -1,36 +1,19 @@
-.PHONY: help test test-integration test-python test-python-unit test-python-gui test-go test-mojo lint lint-tests lint-python lint-go lint-mojo format format-python format-mojo format-tests format-go build-go install run-python-cli run-python-gui run-go-cli run-mojo-cli clean
+.PHONY: help test test-unit test-integration test-perf test-python test-python-unit test-python-gui test-go test-mojo lint lint-tests lint-python lint-go lint-mojo format format-python format-mojo format-tests format-go build-go install run-python-cli run-python-gui run-go-cli run-mojo-cli clean
 
 help: ## Show available targets
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@awk -F ':.*?## ' '/^#########/ {printf "\n%s\n", $$0} /^[a-zA-Z_-]+:.*?## / {printf "%-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-test: test-python test-go test-mojo ## Run all unit suites (python/go/mojo)
+######### TEST #########
 
-lint: lint-python lint-go lint-mojo lint-tests ## Run all linters
-lint-python: ## Ruff on python/
-	$(MAKE) -C python lint
+test: test-python test-go test-mojo test-integration test-perf ## Run all suites (unit + integration + perf)
 
-lint-go: ## go vet
-	$(MAKE) -C go lint
+test-unit: test-python-unit test-go test-mojo ## Run all unit suites (python/go/mojo)
 
-lint-mojo: ## mblack on mojo/
-	$(MAKE) -C mojo lint
+test-perf: ## Python pytest-benchmark performance tests
+	$(MAKE) -C python test-perf
 
-lint-tests: ## Ruff on tests/
-	uv run ruff check tests
-
-format: format-python format-mojo format-tests format-go ## Auto-format all flavours
-
-format-python: ## ruff format on python/
-	$(MAKE) -C python format
-
-format-mojo: ## mblack on mojo/
-	$(MAKE) -C mojo format
-
-format-tests: ## ruff format on tests/
-	uv run ruff format tests
-
-format-go: ## gofmt
-	$(MAKE) -C go format
+test-integration: build-go ## Cross-flavour comparison via tests/test_integration.py
+	uv run pytest tests/test_integration.py -v
 
 test-python: ## Python pytest suite (unit only; GUI has own target)
 	$(MAKE) -C python test
@@ -47,14 +30,47 @@ test-go: ## Go test suite
 test-mojo: ## Mojo test suite (needs mojo toolchain)
 	$(MAKE) -C mojo test
 
+######### LINT #########
+
+lint: lint-python lint-go lint-mojo lint-tests ## Run all linters
+
+lint-python: ## Ruff on python/
+	$(MAKE) -C python lint
+
+lint-go: ## go vet
+	$(MAKE) -C go lint
+
+lint-mojo: ## mblack on mojo/
+	$(MAKE) -C mojo lint
+
+lint-tests: ## Ruff on tests/
+	uv run ruff check tests
+
+######### FORMAT #########
+
+format: format-python format-mojo format-tests format-go ## Auto-format all flavours
+
+format-python: ## ruff format on python/
+	$(MAKE) -C python format
+
+format-mojo: ## mblack on mojo/
+	$(MAKE) -C mojo format
+
+format-tests: ## ruff format on tests/
+	uv run ruff format tests
+
+format-go: ## gofmt
+	$(MAKE) -C go format
+
+######### BUILD / INSTALL #########
+
 build-go: ## Build the go CLI binary (go/pim_calc)
 	$(MAKE) -C go build
 
-test-integration: build-go ## Cross-flavour comparison via tests/test_integration.py
-	uv run pytest tests/test_integration.py -v
-
 install: ## Editable-install the python package (uv)
 	$(MAKE) -C python install
+
+######### RUN #########
 
 run-python-cli: ## Run python CLI: CALC_ARGS="2152,1932 -r 1752,1900"
 	$(MAKE) -C python run-cli
@@ -68,7 +84,9 @@ run-go-cli: ## Build & run the go CLI
 run-mojo-cli: ## Run the mojo wrapper CLI: CALC_ARGS="2152,1932 -r 1752,1900"
 	$(MAKE) -C mojo run-mojo-cli CALC_ARGS=$(CALC_ARGS)
 
+######### CLEAN #########
+
 clean: ## Remove build and cache artifacts
 	$(MAKE) -C python clean
 	$(MAKE) -C go clean
-	rm -rf .pytest_cache
+	rm -rf .pytest_cache .ruff_cache .coverage

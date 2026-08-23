@@ -1,10 +1,18 @@
-.PHONY: test test-unit test-gui lint format install run-cli run-gui clean
+.PHONY: test test-unit test-perf test-gui lint format install run-cli run-gui clean
 
 test: test-unit
 
 test-unit:
-	uv run --project . pytest -p no:pytest-qt --ignore=PIM_Calculator/tests/test_pimQt.py \
+	uv run --project . pytest -m "not benchmark" -p no:pytest-qt --ignore=PIM_Calculator/tests/test_pimQt.py \
 		--cov=PIM_Calculator --cov-report=term-missing --cov-report=xml
+
+test-perf:
+	mkdir -p .benchmarks
+	uv run --project . pytest -p no:pytest-qt PIM_Calculator/tests/test_perf.py \
+		--benchmark-only --benchmark-autosave \
+		--benchmark-histogram=.benchmarks/hist \
+		--benchmark-json=.benchmarks/report.json \
+		-o python_files=test_perf.py
 
 test-gui:
 	uv run --project . pytest PIM_Calculator/tests/test_pimQt.py -o python_files=test_pimQt.py
@@ -36,4 +44,4 @@ run-mojo-cli:
 
 clean:
 
-	rm -rf .pytest_cache *.egg-info build dist
+	-rm -rf .pytest_cache .benchmarks *.egg-info build dist

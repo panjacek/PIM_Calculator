@@ -11,15 +11,14 @@
 - `python/` — reference implementation (PIMCalc class, CLI, Qt GUI, pytest)
 - `go/` — standalone CLI port
 - `mojo/` — Python interop wrapper (calls python lib via CPython bridge)
+- `docs/plans/` — implementation plans live here (one md file per plan)
 - root `pyproject.toml` — dev env (mojo + editable pim-calculator + pytest/ruff), managed with uv
 
 ## Commands
 
 - `make help` — list all targets with descriptions
-- `make test` — all unit suites (python/go/mojo)
-- `make lint` — ruff on python/, mojo/, tests/ + go vet
-- `make test-integration` — cross-flavour comparison (builds go binary, runs tests/test_integration.py)
-- `make run-python-cli`, `make run-go-cli`, `make run-mojo-cli CALC_ARGS="..."` — CLIs
+- Full target reference: `README.md` ("Make targets"), CI details: `docs/ci.md`.
+  Update those files when targets change — do not duplicate the list here.
 - `uv sync --group dev` — rebuild .venv
 
 ## Notes
