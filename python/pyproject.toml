@@ -39,6 +39,8 @@ dev = [
     "pytest",
     "pytest-mock",
     "pytest-cov",
+    "pytest-qt",
+    "pytest-xvfb",
     "ruff",
     "scipy",
     "matplotlib>=2.0",

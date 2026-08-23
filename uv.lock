@@ -310,6 +310,8 @@ dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
+    { name = "pytest-qt" },
+    { name = "pytest-xvfb" },
     { name = "ruff" },
     { name = "scipy" },
 ]

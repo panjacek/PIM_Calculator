@@ -3,7 +3,7 @@
 test: test-unit
 
 test-unit:
-	uv run --project . pytest --ignore=PIM_Calculator/tests/test_pimQt.py
+	uv run --project . pytest -p no:pytest-qt --ignore=PIM_Calculator/tests/test_pimQt.py
 
 test-gui:
 	uv run --project . pytest PIM_Calculator/tests/test_pimQt.py -o python_files=test_pimQt.py

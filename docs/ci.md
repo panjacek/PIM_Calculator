@@ -76,7 +76,11 @@ All three must print the same IM3/IM5 tables.
 
 ## Environment notes
 
+- Python is pinned to **3.14** via root `.python-version`; uv honours it both
+  locally and in CI (downloads a managed interpreter if the runner lacks one).
 - Root `pyproject.toml` pins the Mojo toolchain (`mojo==1.0.0`) and installs
   `pim-calculator` editable from `python/` — this is what the mojo jobs use.
 - `python/` has its own lockfile; CI syncs it per job with uv caching.
 - Go version comes from `go/go.mod` via `setup-go`.
+- GUI job installs the same X/GL system packages as `python/Dockerfile`
+  (gui stage), including `libegl1`/`libgl1` required by PySide6.

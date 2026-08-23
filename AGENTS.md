@@ -18,10 +18,11 @@
 - `make test` — all suites (python/go/mojo)
 - `make lint` — ruff on python/ and mojo/
 - `make run-python-cli`, `make run-go-cli`, `make run-mojo-cli CALC_ARGS="..."` — CLIs
-- `uv sync --extra dev` — rebuild .venv
+- `uv sync --group dev` — rebuild .venv
 
 ## Notes
 
+- Default python: 3.14 (pinned via root `.python-version`, honoured by uv)
 - Mojo toolchain: install via `uv pip install mojo` (https://mojolang.org/install/), version pinned in pyproject.toml
 - Ruff: N999 ignored (module naming is project convention)
 - Go binary `go/pim_calc` is build artifact, gitignored
