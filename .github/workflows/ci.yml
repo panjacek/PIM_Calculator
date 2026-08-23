@@ -38,7 +38,7 @@ jobs:
         run: make test-python-unit
       - name: Upload coverage artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-python
           path: python/coverage.xml
@@ -164,7 +164,7 @@ jobs:
         run: make test-perf
       - name: Upload benchmark results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-results
           path: python/.benchmarks/
