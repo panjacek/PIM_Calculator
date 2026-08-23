@@ -29,6 +29,21 @@ func TestPIM(t *testing.T) {
 	TX_band = []float32{5, 5, 5, 5, 5}
 	im3, im5 = PIM_Calculator.Calculate(TX, TX_band)
 
+	// Truth from the dedup-by-centre-frequency semantics of
+	// remove_duplicates over the full i,j,k(/l,m) cross product.
+	if len(im3.IM) != 19 {
+		t.Errorf("IM3 len is: %d, want: %d", len(im3.IM), 19)
+	}
+	if len(im5.IM) != 31 {
+		t.Errorf("IM5 len is: %d, want: %d", len(im5.IM), 31)
+	}
+	if len(im3.IM) != len(im3.IM_full) {
+		t.Errorf("IM3 full len is: %d, want: %d", len(im3.IM_full), len(im3.IM))
+	}
+	if len(im5.IM) != len(im5.IM_full) {
+		t.Errorf("IM5 full len is: %d, want: %d", len(im5.IM_full), len(im5.IM))
+	}
+
 	//fmt.Println("I've got this:\n", im3)
 	//fmt.Println("I've got this:\n", im5)
 }

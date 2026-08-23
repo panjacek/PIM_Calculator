@@ -5,8 +5,11 @@ default 5 MHz bands), collecting each flavour's --output_file JSON and
 asserting:
 
 1. every flavour yields the set of IM centre frequencies known for this
-   case: IM3 {1712, 1932, 2152, 2372} plus IM5-only {1492, 2592}, and
-2. all flavours agree with each other.
+   case: IM3 {1712, 1932, 2152, 2372} plus IM5-only {1492, 2592},
+2. all flavours agree with each other,
+3. full (cf, min, max) rows agree across flavours (band math), and
+4. per-flavour row counts match known semantics (python keeps duplicate
+   cf rows for distinct TX sources; go dedups by cf value only).
 
 JSON output contract (shared by all flavours, see
 python/PIM_Calculator/pim_calc.py::results_to_json):
@@ -44,8 +47,21 @@ def _centres(payload: dict) -> set[float]:
     return {float(row["cf"]) for row in payload["IM3"] + payload["IM5"]}
 
 
+Row = tuple[float, float, float]
+
+
+def _rows(payload: dict, order: str) -> set[Row]:
+    """Full (cf, min, max) triples for one IM order."""
+    return {(float(r["cf"]), float(r["min"]), float(r["max"])) for r in payload[order]}
+
+
+# Row counts differ by flavour semantics: python keeps duplicate-cf rows
+# when TX source components differ; go dedups by cf value only.
+EXPECTED_COUNTS = {"python": (4, 10), "go": (4, 6), "mojo": (4, 10)}
+
+
 @pytest.fixture(scope="module")
-def results(tmp_path_factory: pytest.TempPathFactory) -> dict[str, set[float]]:
+def results(tmp_path_factory: pytest.TempPathFactory) -> dict[str, dict]:
     """Run the three CLIs on the canonical case, parse their JSON output."""
     out = tmp_path_factory.mktemp("integration")
 
@@ -96,19 +112,39 @@ def results(tmp_path_factory: pytest.TempPathFactory) -> dict[str, set[float]]:
     )
 
     return {
-        path.stem: _centres(json.loads(path.read_text()))
-        for path in sorted(out.glob("*.json"))
+        path.stem: json.loads(path.read_text()) for path in sorted(out.glob("*.json"))
     }
 
 
-def test_matches_known_truth(results: dict[str, set[float]]) -> None:
-    for name, freqs in results.items():
+def test_matches_known_truth(results: dict[str, dict]) -> None:
+    for name, payload in results.items():
+        freqs = _centres(payload)
         assert freqs == EXPECTED, (
             f"{name}: missing={sorted(EXPECTED - freqs)} "
             f"unexpected={sorted(freqs - EXPECTED)}"
         )
 
 
-def test_flavours_agree(results: dict[str, set[float]]) -> None:
-    distinct = {frozenset(freqs) for freqs in results.values()}
-    assert len(distinct) == 1, {name: sorted(f) for name, f in results.items()}
+def test_flavours_agree(results: dict[str, dict]) -> None:
+    centres = {name: _centres(p) for name, p in results.items()}
+    distinct = {frozenset(c) for c in centres.values()}
+    assert len(distinct) == 1, {name: sorted(c) for name, c in centres.items()}
+
+
+def test_row_values_match_python(results: dict[str, dict]) -> None:
+    """Band math must agree per row, not just at centre frequencies."""
+    py_rows = {order: _rows(results["python"], order) for order in ("IM3", "IM5")}
+    for name in ("go", "mojo"):
+        for order in ("IM3", "IM5"):
+            assert _rows(results[name], order) == py_rows[order], (
+                f"{name}/{order} rows differ from python"
+            )
+
+
+def test_row_counts(results: dict[str, dict]) -> None:
+    """Duplicate-row regression guard (per-flavour semantics)."""
+    for name, payload in results.items():
+        counts = (len(payload["IM3"]), len(payload["IM5"]))
+        assert counts == EXPECTED_COUNTS[name], (
+            f"{name}: rows {counts}, want {EXPECTED_COUNTS[name]}"
+        )
