@@ -76,7 +76,8 @@ Everything CI runs is a Makefile target:
 ```bash
 uv sync --group dev                        # root env: mojo toolchain + editable pim-calculator + pytest/ruff
 uv sync --project python --group dev       # python env (add --extra gui for GUI)
-make lint                  # ruff (python/, mojo/, tests/) + go vet
+make lint                  # python: ruff+mypy+bandit, tests: ruff+mypy,
+                           # mojo: mblack, go: go vet
 make test-python-unit      # fast unit tests
 make test-python-gui       # GUI tests (needs a display or xvfb-run)
 make test-perf             # performance benchmarks (histograms + JSON in python/.benchmarks/)
