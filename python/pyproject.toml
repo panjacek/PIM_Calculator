@@ -19,6 +19,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest",
+    "pytest-benchmark[histogram]",
     "pytest-mock",
     "pytest-cov",
     "scipy",
@@ -37,6 +38,7 @@ PIM_GUI_Calculator = "PIM_Calculator.pimQt:main"
 [dependency-groups]
 dev = [
     "pytest",
+    "pytest-benchmark[histogram]",
     "pytest-mock",
     "pytest-cov",
     "pytest-qt",
@@ -49,3 +51,4 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["PIM_Calculator/tests"]
 python_files = ["test_pim_calc.py"]
+markers = ["benchmark: performance benchmarks"]

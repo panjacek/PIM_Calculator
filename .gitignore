@@ -20,6 +20,7 @@ ENV/
 
 # Testing & coverage
 .pytest_cache/
+.benchmarks/
 .coverage
 .coverage.*
 coverage.out

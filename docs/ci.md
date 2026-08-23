@@ -8,10 +8,11 @@ Single workflow: `.github/workflows/ci.yml`. Triggers: push to `main`, PRs to
 ```
 python-lint (ruff)  ──┬──> python-gui (xvfb, PySide6) ──┐
 python-unit (pytest) ─┘                                │
+                       └──> python-perf (benchmarks)   │
 go-lint (go vet) ───────────────────────────┐          │
 go-test ────────────────────────────────────┼──────────┼──> integration
 mojo-lint (mblack) ──> mojo-test ───────────┘          │    (3 CLIs, one case)
-                       (also needs python-lint+unit)   │
+                        (also needs python-lint+unit)  │
 ```
 
 - `python-lint`, `python-unit`, `go-lint`, `go-test`, `mojo-lint` start
@@ -20,6 +21,8 @@ mojo-lint (mblack) ──> mojo-test ───────────┘       
   `mojo-test` additionally waits for the python flavour to be lint-clean and
   unit-green first (mojo wraps the python library).
 - `python-gui` waits for the python flavour too (GUI tests are slow).
+- `python-perf` runs in parallel with everything: benchmarks only need the
+  python lib, no timing gates.
 - `integration` needs all seven jobs green.
 
 ## Jobs
@@ -29,6 +32,7 @@ mojo-lint (mblack) ──> mojo-test ───────────┘       
 | python-lint | `make lint-python` (ruff)                                 |
 | python-unit | `make test-python-unit` (pytest, GUI tests excluded)      |
 | python-gui  | `xvfb-run make test-python-gui` (PySide6 under Xvfb)      |
+| python-perf | `make test-perf` (pytest-benchmark; uploads SVG/JSON artifacts) |
 | go-lint     | `make lint-go` (`go vet`)                                 |
 | go-test     | `make test-go`                                            |
 | mojo-lint   | `make lint-mojo` (mblack)                                 |
@@ -75,6 +79,7 @@ uv sync --project python --group dev       # python env (add --extra gui for GUI
 make lint                  # ruff (python/, mojo/, tests/) + go vet
 make test-python-unit      # fast unit tests
 make test-python-gui       # GUI tests (needs a display or xvfb-run)
+make test-perf             # performance benchmarks (histograms + JSON in python/.benchmarks/)
 make test-go
 make test-mojo
 ```

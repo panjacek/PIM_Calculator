@@ -297,6 +297,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.13.3" },
     { name = "pyside6", marker = "extra == 'gui'" },
     { name = "pytest", marker = "extra == 'test'" },
+    { name = "pytest-benchmark", extras = ["histogram"], marker = "extra == 'test'" },
     { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "pytest-mock", marker = "extra == 'test'" },
     { name = "scipy", marker = "extra == 'gui'", specifier = ">=1.0" },
@@ -308,6 +309,7 @@ provides-extras = ["test", "gui"]
 dev = [
     { name = "matplotlib", specifier = ">=2.0" },
     { name = "pytest" },
+    { name = "pytest-benchmark", extras = ["histogram"] },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
     { name = "pytest-qt" },

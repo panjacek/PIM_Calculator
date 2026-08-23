@@ -11,6 +11,7 @@
 - `python/` — reference implementation (PIMCalc class, CLI, Qt GUI, pytest)
 - `go/` — standalone CLI port
 - `mojo/` — Python interop wrapper (calls python lib via CPython bridge)
+- `docs/plans/` — implementation plans live here (one md file per plan)
 - root `pyproject.toml` — dev env (mojo + editable pim-calculator + pytest/ruff), managed with uv
 
 ## Commands
