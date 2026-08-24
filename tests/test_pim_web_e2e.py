@@ -1,10 +1,8 @@
 """Playwright e2e tests: spawn streamlit headless, drive the default flow.
 
-Requires the web group plus a chromium install:
-    uv sync --group dev --group web
-    uv run playwright install chromium
-Go/mojo engine paths are guarded by skipif so the default suite stays green
-where the binary/toolchain is absent.
+Run via `make test-web` (auto-syncs the web group and downloads chromium
+into ~/.cache on first use). Go/mojo engine paths are guarded by skipif so
+the default suite stays green where the binary/toolchain is absent.
 """
 
 from __future__ import annotations
