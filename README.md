@@ -93,6 +93,21 @@ make run-python-gui                  # dev shortcut (uv sync --extra gui)
 
 Core install (`pip install pim-calculator`) needs only numpy.
 
+## Web UI
+
+A Streamlit app drives the calculator through the shared JSON contract:
+engine selection (`python` / `go` / `mojo` / `mojo_py`), editable TX/RX
+carrier tables, IM3/IM5 tables with RX-hit flags, and a frequency chart.
+
+```bash
+uv sync --group dev --group web        # root env incl. web deps
+make run-web                           # launch http://localhost:8501
+make test-web                          # unit + playwright e2e (chromium lands in ~/.cache)
+```
+
+The python engine always works; go/mojo engines need their binary/toolchain
+and are shown with a hint (and skipped) when unavailable.
+
 ## Make targets
 
 Run `make help` for the full annotated list. The essentials:
