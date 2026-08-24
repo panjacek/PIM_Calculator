@@ -1,4 +1,4 @@
-.PHONY: help build build-go build-mojo build-python test test-unit test-integration test-perf test-python test-python-unit test-python-gui test-go test-mojo lint lint-tests lint-python lint-go lint-mojo format format-python format-mojo format-tests format-go install sync sync-root sync-python sync-go run-python-cli run-python-gui run-go-cli run-mojo-cli run-mojo-py-cli clean
+.PHONY: help build build-go build-mojo build-python test test-unit test-integration test-perf test-python test-python-unit test-python-gui test-go test-mojo test-web setup-web lint lint-tests lint-python lint-go lint-mojo format format-python format-mojo format-tests format-go install sync sync-root sync-python sync-go run-python-cli run-python-gui run-go-cli run-mojo-cli run-mojo-py-cli run-web clean
 
 help: ## Show available targets
 	@awk -F ':.*?## ' '/^#########/ {printf "\n%s\n", $$0} /^[a-zA-Z_-]+:.*?## / {printf "%-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -43,9 +43,9 @@ lint-go: ## go vet
 lint-mojo: ## mblack on mojo/
 	$(MAKE) -C mojo lint
 
-lint-tests: ## Ruff + mypy on tests/
-	uv run ruff check tests
-	uv run mypy tests
+lint-tests: ## Ruff + mypy on tests/ and web/
+	uv run ruff check tests web
+	uv run --group dev --group web mypy tests web
 
 ######### FORMAT #########
 
@@ -69,7 +69,7 @@ sync: sync-root sync-python sync-go ## Upgrade dep versions & re-sync all flavou
 
 sync-root:
 	uv lock --upgrade
-	uv sync --group dev
+	uv sync --group dev --group web
 
 sync-python:
 	$(MAKE) -C python sync
@@ -109,6 +109,16 @@ run-mojo-cli: ## Build & run the pure Mojo CLI binary: CALC_ARGS="2152,1932 -r 1
 
 run-mojo-py-cli: ## Run the mojo wrapper CLI (python interop): CALC_ARGS="2152,1932 -r 1752,1900"
 	$(MAKE) -C mojo run-mojo-py-cli CALC_ARGS="$(CALC_ARGS)"
+
+run-web: ## Launch streamlit web UI
+	uv run --group dev --group web streamlit run web/app.py
+
+test-web: setup-web ## Web UI unit + playwright e2e tests
+	uv run --group dev --group web pytest tests/test_pim_web.py tests/test_pim_web_e2e.py
+
+setup-web: ## One-time web deps: env sync + chromium into ~/.cache (no sudo)
+	uv sync --group dev --group web
+	uv run --group dev --group web playwright install chromium
 
 ######### CLEAN #########
 

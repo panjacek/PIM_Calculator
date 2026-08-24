@@ -33,7 +33,7 @@ means you skip the `go/` flavour and its make targets.
 ## Quick start
 
 ```bash
-uv sync --group dev                      # root env: python package + mojo toolchain
+uv sync --group dev --group web          # root env: python package + mojo toolchain + web deps
 make run-python-cli CALC_ARGS="2152,1932 -r 1752,1900"
 make run-mojo-cli CALC_ARGS="2152,1932 -r 1752,1900"   # pure mojo binary
 ```
@@ -93,6 +93,21 @@ make run-python-gui                  # dev shortcut (uv sync --extra gui)
 
 Core install (`pip install pim-calculator`) needs only numpy.
 
+## Web UI
+
+A Streamlit app drives the calculator through the shared JSON contract:
+engine selection (`python` / `go` / `mojo` / `mojo_py`), editable TX/RX
+carrier tables, IM3/IM5 tables with RX-hit flags, and a frequency chart.
+
+```bash
+uv sync --group dev --group web        # root env incl. web deps
+make run-web                           # launch http://localhost:8501
+make test-web                          # unit + playwright e2e (chromium lands in ~/.cache)
+```
+
+The python engine always works; go/mojo engines need their binary/toolchain
+and are shown with a hint (and skipped) when unavailable.
+
 ## Make targets
 
 Run `make help` for the full annotated list. The essentials:
@@ -109,6 +124,9 @@ Run `make help` for the full annotated list. The essentials:
 - `make run-python-cli CALC_ARGS="..."`, `make run-go-cli`,
   `make run-mojo-cli CALC_ARGS="..."` (pure Mojo, compiles a native binary
   first; `run-mojo-py-cli` for the python-interop wrapper) - the CLIs
+- `make run-web` - launch the streamlit web UI (all flavours via the shared
+  JSON contract); `make test-web` - its unit + playwright e2e tests
+  (first run auto-downloads chromium into `~/.cache`, no sudo)
 - `make build` - build all packages: go/mojo CLI binaries + python wheel/sdist
   (`make build-go`, `make build-mojo`, `make build-python` for individual
   flavours), `make install`, `make clean`
@@ -116,10 +134,11 @@ Run `make help` for the full annotated list. The essentials:
 ## Development environment
 
 Root `pyproject.toml` defines a uv-managed dev environment with the Mojo
-toolchain, the editable `pim-calculator` package, pytest and ruff:
+toolchain, the editable `pim-calculator` package, pytest and ruff (plus the
+`web` group for the streamlit UI):
 
 ```bash
-uv sync --group dev
+uv sync --group dev --group web
 ```
 
 Mojo toolchain: https://mojolang.org/install/ (installed as the pinned

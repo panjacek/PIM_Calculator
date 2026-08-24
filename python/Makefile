@@ -15,6 +15,7 @@ test-perf:
 		-o python_files=test_perf.py
 
 test-gui:
+	uv sync --extra gui --project .
 	uv run --project . pytest PIM_Calculator/tests/test_pimQt.py -o python_files=test_pimQt.py
 
 lint:
@@ -30,7 +31,7 @@ install:
 
 sync:
 	uv lock --project . --upgrade
-	uv sync --project . --group dev
+	uv sync --project . --group dev --extra gui
 
 run-cli:
 	uv run --project . PIM_Calculator 2152,1932 --rx_list=1752,1900
