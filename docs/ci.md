@@ -107,8 +107,8 @@ between flavours fails with the exact diff.
 Everything CI runs is a Makefile target:
 
 ```bash
-uv sync --group dev                        # root env: mojo toolchain + editable pim-calculator + pytest/ruff
-uv sync --project python --group dev       # python env (add --extra gui for GUI)
+uv sync --group dev --group web           # root env: mojo toolchain + editable pim-calculator + web deps
+uv sync --project python --group dev --extra gui   # python env (all test targets self-ensure extras)
 make lint                  # python: ruff+mypy+bandit, tests: ruff+mypy,
                            # mojo: mblack, go: go vet
 make test-python-unit      # fast unit tests

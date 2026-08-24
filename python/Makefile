@@ -31,7 +31,7 @@ install:
 
 sync:
 	uv lock --project . --upgrade
-	uv sync --project . --group dev
+	uv sync --project . --group dev --extra gui
 
 run-cli:
 	uv run --project . PIM_Calculator 2152,1932 --rx_list=1752,1900

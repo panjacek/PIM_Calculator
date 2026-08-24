@@ -69,7 +69,7 @@ sync: sync-root sync-python sync-go ## Upgrade dep versions & re-sync all flavou
 
 sync-root:
 	uv lock --upgrade
-	uv sync --group dev
+	uv sync --group dev --group web
 
 sync-python:
 	$(MAKE) -C python sync

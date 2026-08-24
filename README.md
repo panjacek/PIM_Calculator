@@ -33,7 +33,7 @@ means you skip the `go/` flavour and its make targets.
 ## Quick start
 
 ```bash
-uv sync --group dev                      # root env: python package + mojo toolchain
+uv sync --group dev --group web          # root env: python package + mojo toolchain + web deps
 make run-python-cli CALC_ARGS="2152,1932 -r 1752,1900"
 make run-mojo-cli CALC_ARGS="2152,1932 -r 1752,1900"   # pure mojo binary
 ```
@@ -119,10 +119,11 @@ Run `make help` for the full annotated list. The essentials:
 ## Development environment
 
 Root `pyproject.toml` defines a uv-managed dev environment with the Mojo
-toolchain, the editable `pim-calculator` package, pytest and ruff:
+toolchain, the editable `pim-calculator` package, pytest and ruff (plus the
+`web` group for the streamlit UI):
 
 ```bash
-uv sync --group dev
+uv sync --group dev --group web
 ```
 
 Mojo toolchain: https://mojolang.org/install/ (installed as the pinned
