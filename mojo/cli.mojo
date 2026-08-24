@@ -32,9 +32,12 @@ def find_flag(args: List[String], flag: String) -> String:
 
 
 def parse_freq_list(raw: String) raises -> List[Float64]:
-    """Convert '1900,1910' to a list of floats."""
+    """Convert '1900,1910' to a list of floats; empty items (e.g. from a
+    trailing comma) are skipped so atof never sees an empty string."""
     var result = List[Float64]()
     for part in raw.split(","):
+        if part == "":
+            continue
         result.append(atof(String(part)))
     return result^
 
