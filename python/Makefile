@@ -15,6 +15,7 @@ test-perf:
 		-o python_files=test_perf.py
 
 test-gui:
+	uv sync --extra gui --project .
 	uv run --project . pytest PIM_Calculator/tests/test_pimQt.py -o python_files=test_pimQt.py
 
 lint:

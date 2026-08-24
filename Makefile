@@ -1,4 +1,4 @@
-.PHONY: help build build-go build-mojo build-python test test-unit test-integration test-perf test-python test-python-unit test-python-gui test-go test-mojo test-web lint lint-tests lint-python lint-go lint-mojo format format-python format-mojo format-tests format-go install sync sync-root sync-python sync-go run-python-cli run-python-gui run-go-cli run-mojo-cli run-mojo-py-cli run-web clean
+.PHONY: help build build-go build-mojo build-python test test-unit test-integration test-perf test-python test-python-unit test-python-gui test-go test-mojo test-web setup-web lint lint-tests lint-python lint-go lint-mojo format format-python format-mojo format-tests format-go install sync sync-root sync-python sync-go run-python-cli run-python-gui run-go-cli run-mojo-cli run-mojo-py-cli run-web clean
 
 help: ## Show available targets
 	@awk -F ':.*?## ' '/^#########/ {printf "\n%s\n", $$0} /^[a-zA-Z_-]+:.*?## / {printf "%-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -113,8 +113,12 @@ run-mojo-py-cli: ## Run the mojo wrapper CLI (python interop): CALC_ARGS="2152,1
 run-web: ## Launch streamlit web UI
 	uv run --group dev --group web streamlit run web/app.py
 
-test-web: ## Web UI unit + playwright e2e tests
+test-web: setup-web ## Web UI unit + playwright e2e tests
 	uv run --group dev --group web pytest tests/test_pim_web.py tests/test_pim_web_e2e.py
+
+setup-web: ## One-time web deps: env sync + chromium into ~/.cache (no sudo)
+	uv sync --group dev --group web
+	uv run --group dev --group web playwright install chromium
 
 ######### CLEAN #########
 

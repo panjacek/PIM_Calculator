@@ -111,7 +111,7 @@ Run `make help` for the full annotated list. The essentials:
   first; `run-mojo-py-cli` for the python-interop wrapper) - the CLIs
 - `make run-web` - launch the streamlit web UI (all flavours via the shared
   JSON contract); `make test-web` - its unit + playwright e2e tests
-  (one-time: `uv sync --group dev --group web && uv run --group dev --group web playwright install chromium`)
+  (first run auto-downloads chromium into `~/.cache`, no sudo)
 - `make build` - build all packages: go/mojo CLI binaries + python wheel/sdist
   (`make build-go`, `make build-mojo`, `make build-python` for individual
   flavours), `make install`, `make clean`

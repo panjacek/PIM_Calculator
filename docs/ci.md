@@ -117,9 +117,8 @@ make test-perf             # performance benchmarks (histograms + JSON in python
 make test-go
 make test-mojo
 
-# web UI (unit + playwright e2e):
-uv sync --group dev --group web
-uv run --group dev --group web playwright install chromium
+# web UI (unit + playwright e2e) — self-contained, downloads
+# chromium into ~/.cache on first run:
 make test-web
 ```
 

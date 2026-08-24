@@ -98,7 +98,7 @@ def test_go_engine_flow(streamlit_url: str, page: Page) -> None:
     page.goto(streamlit_url)
     page.get_by_text("go", exact=True).click()
     page.get_by_role("button", name="Calculate").click()
-    expect(page.get_by_text("engine: go")).to_be_visible(timeout=20000)
+    expect(page.get_by_text("engine: go").first).to_be_visible(timeout=20000)
     _assert_no_exception(page)
 
 
@@ -110,7 +110,7 @@ def test_mojo_engine_flow(engine: str, streamlit_url: str, page: Page) -> None:
     page.goto(streamlit_url)
     page.get_by_text(engine, exact=True).click()
     page.get_by_role("button", name="Calculate").click()
-    expect(page.get_by_text(f"engine: {engine}")).to_be_visible(timeout=30000)
+    expect(page.get_by_text(f"engine: {engine}").first).to_be_visible(timeout=30000)
     _assert_no_exception(page)
 
 
