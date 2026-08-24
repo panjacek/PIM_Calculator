@@ -150,6 +150,36 @@ jobs:
       - name: Cross-flavour comparison (TX 2152,1932 / RX 1752,1900)
         run: make test-integration
 
+  # --- native binaries ------------------------------------------------------
+  # Final gate: with every flavour green (incl. the cross-flavour
+  # comparison), build the release candidates and store them as temporary run
+  # artifacts (short retention; a future tag-driven release workflow will
+  # turn them into a proper GitHub Release / PyPI upload). This is also the
+  # only place the pure mojo CLI gets compiled.
+  binaries:
+    name: binaries / CLIs + python package
+    needs: [integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go/go.mod
+          cache: false
+      - name: Sync root env (mojo toolchain)
+        run: uv sync --group dev
+      - name: Build packages into ./dist (go/mojo CLIs + python wheel/sdist)
+        run: make build
+      - name: Upload packages artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: packages-linux-amd64
+          path: dist/
+          retention-days: 14
+          if-no-files-found: error
+
   # --- performance ---------------------------------------------------------
   # Runs in parallel with the other flavours: benchmarks need only the python
   # lib. No timing gates (runner noise); autosaved JSONs are kept as artifacts

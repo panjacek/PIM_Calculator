@@ -453,7 +453,7 @@ wheels = [
 
 [[package]]
 name = "pim-calculator"
-version = "0.3"
+version = "0.4"
 source = { editable = "python" }
 dependencies = [
     { name = "numpy" },
@@ -491,7 +491,7 @@ dev = [
 
 [[package]]
 name = "pim-calculator-mojo"
-version = "0.3"
+version = "0.4"
 source = { virtual = "." }
 dependencies = [
     { name = "mojo" },

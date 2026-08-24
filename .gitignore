@@ -29,9 +29,8 @@ htmlcov/
 .cache/
 .tox/
 
-# Go binaries and artifacts
+# Compiled CLI binary (go flavour)
 go/pim_calc
-pim_calc
 
 # IDE and OS files
 .DS_Store

@@ -1,14 +1,14 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pim-calculator"
-version = "0.3"
+version = "0.4"
 description = "Passive Intermodulation Calculator for RF antennas"
 readme = "README.md"
 requires-python = ">=3.12"
-license = { text = "Unlicense" }
+license = "Unlicense"
 authors = [
     { name = "Jacek Kreft" }
 ]

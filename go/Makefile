@@ -1,5 +1,9 @@
 .PHONY: all test lint format build run-cli sync clean
 
+# All build artifacts land in the shared root dist/ directory.
+DIST := ../dist
+BIN := $(DIST)/pim_calc-go
+
 all: build
 
 test:
@@ -13,15 +17,17 @@ format:
 	gofmt -l -w .
 
 build:
-	go build -o pim_calc PIM_Calculator.go
+	mkdir -p $(DIST)
+	go build -o $(BIN) PIM_Calculator.go
 
 sync:
 	go get -u ./...
 	go mod tidy
 
 run-cli: build
-	./pim_calc -tx_band "5,5" 1980,1940
+	$(BIN) -tx_band "5,5" 1980,1940
 
 clean:
+	rm -f $(BIN)
 	rm -f pim_calc
 
