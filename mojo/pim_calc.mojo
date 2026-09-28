@@ -481,7 +481,11 @@ def get_results(
         lines.append("==== RX check ===")
         for hit in im3_hits:
             lines.append("IM3: " + hit.describe())
+        if len(im3_hits) == 0:
+            lines.append("IM3: no hits")
         for hit in im5_hits:
             lines.append("IM5: " + hit.describe())
+        if len(im5_hits) == 0:
+            lines.append("IM5: no hits")
 
     return lines^

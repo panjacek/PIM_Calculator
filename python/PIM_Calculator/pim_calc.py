@@ -261,21 +261,31 @@ class PIMCalc:
 
             pim_result.append((name, im["IM_FULL"]))
             if rx_list is not None:
-                self.logger.info("==== RX check ===")
                 im_hits = self.check_rx(rx_list, im, rx_bandwith)
-                if len(im_hits) > 0:
-                    self.logger.warning(f"yey, we've got some {name} PIM")
                 rx_result.append((f"{name} RX", im_hits))
-                text_result.append(48 * "=")
-                self.logger.info(48 * "=")
 
+        if rx_result:
+            self.logger.info("==== RX check ===")
+            text_result.append("==== RX check ===")
         for rx_res in rx_result:
             im_type = rx_res[0]
-            self.logger.warning(f"===== {im_type} =====")
-            text_result.append(f"===== {im_type} =====")
-            for hit in rx_res[1]:
-                self.logger.warning(f"{hit[0]} is inside: {hit[1]}, TX src: {hit[2]}")
-                text_result.append(f"{hit[0]} is inside: {hit[1]}, TX src: {hit[2]}")
+            hits = rx_res[1]
+            header = f"===== {im_type} ====="
+            if not hits:
+                self.logger.info(header)
+                self.logger.info("no hits")
+                text_result.append(header)
+                text_result.append("no hits")
+                continue
+            self.logger.warning(header)
+            text_result.append(header)
+            for hit in hits:
+                line = (
+                    f"{hit[0][0]}-{hit[0][1]} is inside: "
+                    f"{hit[1][0]}-{hit[1][1]}, TX src: {hit[2]}"
+                )
+                self.logger.warning(line)
+                text_result.append(line)
 
         return text_result, pim_result, rx_result
 
@@ -404,9 +414,9 @@ def main() -> None:
     rx_size = setup_dict["rx_size"]
 
     logger.info(f"Using TX Carriers:{tx_list}")
-    logger.info(f"Using RX Carriers:{tx_size}")
+    logger.info(f"Using TX Bandwidths:{tx_size}")
     logger.info(f"Using RX Carriers:{rx_list}")
-    logger.info(f"Using RX Carriers:{rx_size}")
+    logger.info(f"Using RX Bandwidths:{rx_size}")
 
     _text_result, _pim_result, _rx_result = pimc.get_results(
         tx_list, tx_size, rx_list, rx_size

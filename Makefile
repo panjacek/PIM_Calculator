@@ -95,18 +95,27 @@ install: ## Editable-install the python package (uv)
 
 ######### RUN #########
 
+# Target-specific CALC_ARGS defaults: a bare call must forward real args,
+# forwarding an empty root value would override the sub-make defaults.
+run-python-cli: CALC_ARGS ?= 2152,1932 -r 1752,1900
 run-python-cli: ## Run python CLI: CALC_ARGS="2152,1932 -r 1752,1900"
-	$(MAKE) -C python run-cli
+	$(MAKE) -C python run-cli CALC_ARGS="$(CALC_ARGS)"
 
 run-python-gui: ## Run the Qt GUI
 	$(MAKE) -C python run-gui
 
+# Flags must come before the positional TX list: the go flag package stops
+# parsing at the first non-flag argument. rx_band must be explicit too, the
+# go flavour does not auto-expand band lists and panics on a length mismatch.
+run-go-cli: CALC_ARGS ?= -rx_list 1752,1900 -rx_band 5,5 -tx_band 5,5 2152,1932
 run-go-cli: ## Build & run the go CLI
 	$(MAKE) -C go run-cli CALC_ARGS="$(CALC_ARGS)"
 
+run-mojo-cli: CALC_ARGS ?= 2152,1932 -r 1752,1900
 run-mojo-cli: ## Build & run the pure Mojo CLI binary: CALC_ARGS="2152,1932 -r 1752,1900"
 	$(MAKE) -C mojo run-mojo-cli CALC_ARGS="$(CALC_ARGS)"
 
+run-mojo-py-cli: CALC_ARGS ?= 2152,1932 -r 1752,1900
 run-mojo-py-cli: ## Run the mojo wrapper CLI (python interop): CALC_ARGS="2152,1932 -r 1752,1900"
 	$(MAKE) -C mojo run-mojo-py-cli CALC_ARGS="$(CALC_ARGS)"
 

@@ -23,8 +23,13 @@ $(BIN): $(SRC)
 	mkdir -p $(DIST)
 	uv run --project .. mojo build -I . cli.mojo -o $@
 
+# mojo build bakes an absolute RUNPATH pointing at the venv that built the
+# binary; resolve the lib dir per machine (LD_LIBRARY_PATH beats RUNPATH) so
+# the binary still loads after checkout/venv moves.
+MOJO_LIB = $(shell uv run --project .. python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")/modular/lib
+
 run-mojo-cli: $(BIN)
-	$(BIN) $(CALC_ARGS)
+	LD_LIBRARY_PATH="$(MOJO_LIB):$$LD_LIBRARY_PATH" $(BIN) $(CALC_ARGS)
 
 run-mojo-py-cli:
 	export MODULAR_DEBUG=$(MODULAR_DEBUG) \

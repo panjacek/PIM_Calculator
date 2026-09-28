@@ -234,6 +234,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.chk_box[-1].setChecked(False)
         self.chk_box.append(QtWidgets.QCheckBox("Plot IM Separately"))
         self.chk_box[-1].setChecked(False)
+        # TODO: wire checkbox to plot source annotation (rendered but never read)
         self.chk_box.append(QtWidgets.QCheckBox("Show IM source"))
         self.chk_box[-1].setChecked(False)
         calculate_btn = QtWidgets.QPushButton("Calculate", self)
