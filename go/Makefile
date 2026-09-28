@@ -24,8 +24,14 @@ sync:
 	go get -u ./...
 	go mod tidy
 
+# Default for direct `make -C go run-cli`; root Makefile always forwards its own.
+# Go needs explicit bands, no auto-expansion (length mismatch panics), and
+# flags must precede the positional TX list (the go flag package stops
+# parsing at the first non-flag argument).
+CALC_ARGS ?= -rx_list 1752,1900 -rx_band 5,5 -tx_band 5,5 2152,1932
+
 run-cli: build
-	$(BIN) -tx_band "5,5" 1980,1940
+	$(BIN) $(CALC_ARGS)
 
 clean:
 	rm -f $(BIN)

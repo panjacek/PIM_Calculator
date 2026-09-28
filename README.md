@@ -7,6 +7,10 @@ Implemented in three interchangeable flavours that are kept in lockstep by a
 cross-flavour integration test in CI.
 
 [![CI](https://github.com/panjacek/PIM_Calculator/actions/workflows/ci.yml/badge.svg)](https://github.com/panjacek/PIM_Calculator/actions/workflows/ci.yml)
+[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](LICENSE)
+[![python-3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB.svg)](python/pyproject.toml)
+[![go-1.25](https://img.shields.io/badge/go-1.25-00ADD8.svg)](go/go.mod)
+[![mojo-1.0](https://img.shields.io/badge/mojo-1.0-FFCF00.svg)](pyproject.toml)
 
 ## What is PIM?
 
@@ -30,7 +34,50 @@ CI keeps all flavours in lockstep via a cross-flavour integration test, but
 locally nothing forces you to build more than one: no Go on your host simply
 means you skip the `go/` flavour and its make targets.
 
+## Design decisions
+
+- **Three flavours, one algorithm.** Each directory implements the same
+  PIM maths against the same CLI contract, so you can run whichever runtime
+  your environment already has. Python is the reference, Go is a standalone
+  binary with zero deps, Mojo compiles to a native binary.
+- **Shared JSON contract.** Every flavour serialises results to the same
+  JSON shape (`tx_list`, `rx_list`, `IM3`, `IM5` rows of `cf`/`min`/`max`).
+  It is the language-agnostic seam: the web UI drives all four engines
+  (python, go, mojo, mojo_py) through it without knowing any of their code.
+- **Cross-flavour integration test as drift guard.** CI runs all four CLIs
+  on one canonical case and fails if centres, row values or row counts
+  disagree. Port changes cannot silently diverge.
+- **Mojo twice over.** `mojo/` holds a pure native port (fast, no python at
+  runtime) and a CPython-interop wrapper around the python library, proving
+  the same logic works natively and through interop.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    CLI["CLI<br/>PIM_Calculator"] --> Calc["PIMCalc.calculate()"]
+    GUI["Qt GUI"] --> Calc
+    Calc --> Ser["results_to_json()"]
+    Ser --> JSON[("shared JSON contract")]
+    GoCLI["go CLI"] --> JSON
+    MojoCLI["mojo CLI (pure)"] --> JSON
+    MojoPy["mojo CLI (interop)"] -->|uses python lib| Calc
+    Web["Streamlit web UI"] -->|python engine, in-process| Calc
+    Web -->|subprocess + JSON file| GoCLI
+    Web -->|subprocess + JSON file| MojoCLI
+    IT["cross-flavour integration test"] -->|asserts identical output| JSON
+```
+
 ## Quick start
+
+Install [uv](https://docs.astral.sh/uv/) first, it fetches the pinned Python
+version and every toolchain used below:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then:
 
 ```bash
 uv sync --group dev --group web          # root env: python package + mojo toolchain + web deps
@@ -41,7 +88,7 @@ make run-mojo-cli CALC_ARGS="2152,1932 -r 1752,1900"   # pure mojo binary
 Go flavour (only if you want it):
 
 ```bash
-make run-go-cli CALC_ARGS="2152,1932 -r 1752,1900"     # builds dist/pim_calc-go first
+make run-go-cli CALC_ARGS="-rx_list 1752,1900 -rx_band 5,5 -tx_band 5,5 2152,1932"   # builds dist/pim_calc-go first
 ```
 
 Notes: Python >= 3.14 is pinned via `.python-version` and fetched
@@ -53,9 +100,9 @@ span every flavour and therefore need all toolchains installed.
 Same arguments for the python and mojo flavours:
 
 ```
-pim_calc [-h] [--tx_size TX_SIZE] [-r RX_LIST] [--rx_size RX_SIZE]
-         [--output_file OUTPUT_FILE] [--log_lvl LOG_LVL]
-         tx_list
+PIM_Calculator [-h] [--tx_size TX_SIZE] [-r RX_LIST] [--rx_size RX_SIZE]
+                [--output_file OUTPUT_FILE] [--log_lvl LOG_LVL]
+                tx_list
 ```
 
 | argument | description |
@@ -68,30 +115,78 @@ pim_calc [-h] [--tx_size TX_SIZE] [-r RX_LIST] [--rx_size RX_SIZE]
 | --log_lvl LOG_LVL | logger level to display [INFO] |
 
 The go flavour uses flags instead:
-`pim_calc -tx_band "5,5" -rx_list "1752,1900" -rx_band "5,5" 2152,1932`
+`dist/pim_calc-go -tx_band "5,5" -rx_list "1752,1900" -rx_band "5,5" 2152,1932`
 (band lists are always explicit there — no auto-expansion).
 
-JSON output (identical schema in all flavours):
+JSON output (identical schema in all flavours), for the case
+`2152,1932 -r 1752,1900`:
 
 ```json
 {
   "tx_list": [2152.0, 1932.0],
   "rx_list": [1752.0, 1900.0],
-  "IM3": [{"cf": 1712.0, "min": 1704.5, "max": 1719.5}],
-  "IM5": [{"cf": 1492.0, "min": 1479.5, "max": 1504.5}]
+  "IM3": [
+    {"cf": 1712.0, "min": 1704.5, "max": 1719.5},
+    {"cf": 1932.0, "min": 1924.5, "max": 1939.5},
+    {"cf": 2152.0, "min": 2144.5, "max": 2159.5},
+    {"cf": 2372.0, "min": 2364.5, "max": 2379.5}
+  ],
+  "IM5": [
+    {"cf": 1492.0, "min": 1479.5, "max": 1504.5},
+    {"cf": 1712.0, "min": 1699.5, "max": 1724.5}
+  ]
 }
+```
+
+IM5 is truncated above: this case really emits 10 IM5 rows, duplicates stay
+in when the same centre frequency comes from different TX source pairs.
+
+## Example output
+
+`make run-python-cli CALC_ARGS="2152,1932 -r 1752,1900"` prints the IM3
+table below (log header and the IM5 table omitted here), followed by the
+RX check verdict:
+
+```
+================================================
+PIM Cf | f min  | f max  | TX source
+1492.0 | 1479.5 | 1504.5 | [1932. 1932. 1932. 2152. 2152.]
+1712.0 | 1699.5 | 1724.5 | [1932. 1932. 1932. 2152. 1932.]
+1712.0 | 1699.5 | 1724.5 | [2152. 1932. 1932. 2152. 2152.]
+1932.0 | 1919.5 | 1944.5 | [2152. 1932. 1932. 2152. 1932.]
+1932.0 | 1919.5 | 1944.5 | [2152. 2152. 1932. 2152. 2152.]
+2152.0 | 2139.5 | 2164.5 | [2152. 1932. 1932. 1932. 1932.]
+2152.0 | 2139.5 | 2164.5 | [2152. 2152. 1932. 2152. 1932.]
+2372.0 | 2359.5 | 2384.5 | [2152. 2152. 1932. 1932. 1932.]
+2372.0 | 2359.5 | 2384.5 | [2152. 2152. 2152. 1932. 1932.]
+2592.0 | 2579.5 | 2604.5 | [2152. 2152. 2152. 1932. 1932.]
+================================================
+==== RX check ===
+===== IM3 RX =====
+no hits
+===== IM5 RX =====
+no hits
+```
+
+When an RX carrier does collide, each hit line names the RX range, the
+offending PIM product and its TX source:
+
+```
+==== RX check ===
+===== IM3 RX =====
+1709.5-1714.5 is inside: 1704.5-1719.5, TX src: [1932. 1932. 2152.]
 ```
 
 ## GUI (optional)
 
-The Qt GUI is an extra — the CLI and library work without it:
+The Qt GUI is an extra, the CLI and library work without it:
 
 ```bash
-pip install "pim-calculator[gui]"    # users: pulls PySide6, scipy, matplotlib
-make run-python-gui                  # dev shortcut (uv sync --extra gui)
+uv sync --project python --extra gui    # pulls PySide6, scipy, matplotlib
+make run-python-gui                     # launch the GUI
 ```
 
-Core install (`pip install pim-calculator`) needs only numpy.
+The core package needs only numpy, the GUI pulls the `gui` extra.
 
 ## Web UI
 

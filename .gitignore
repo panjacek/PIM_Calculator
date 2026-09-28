@@ -39,3 +39,6 @@ go/pim_calc
 
 # Local planning notes (not part of the repo)
 docs/plans/
+
+# Binary assets never tracked (user decision)
+docs/assets/

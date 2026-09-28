@@ -33,8 +33,11 @@ sync:
 	uv lock --project . --upgrade
 	uv sync --project . --group dev --extra gui
 
+# Default for direct `make -C python run-cli`; root Makefile always forwards its own.
+CALC_ARGS ?= 2152,1932 --rx_list=1752,1900
+
 run-cli:
-	uv run --project . PIM_Calculator 2152,1932 --rx_list=1752,1900
+	uv run --project . PIM_Calculator $(CALC_ARGS)
 
 
 run-gui:

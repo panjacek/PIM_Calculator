@@ -260,12 +260,18 @@ func main() {
 
 	im_results := CheckRX(args_RX.freq, args_RX.band, im3.IM_full)
 	fmt.Println("------------IM3------------")
+	if len(im_results) == 0 {
+		fmt.Println("no hits")
+	}
 	for i := range im_results {
 		fmt.Printf("%f is affected by %f\n", im_results[i][0], im_results[i][1:])
 	}
 	print_div("-", 80)
 	fmt.Println("------------IM5------------")
 	im_results = CheckRX(args_RX.freq, args_RX.band, im5.IM_full)
+	if len(im_results) == 0 {
+		fmt.Println("no hits")
+	}
 	for i := range im_results {
 		fmt.Printf("%f is affected by %f\n", im_results[i][0], im_results[i][1:])
 	}
