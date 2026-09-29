@@ -48,4 +48,4 @@ run-gui:
 
 clean:
 
-	-rm -rf .pytest_cache .benchmarks *.egg-info build dist
+	-rm -rf .pytest_cache .benchmarks .mypy_cache .ruff_cache *.egg-info build dist

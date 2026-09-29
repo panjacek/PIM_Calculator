@@ -1,7 +1,6 @@
 package PIM_Calculator
 
 import (
-	//"os"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -99,7 +98,6 @@ func read_args() (config, config, *string) {
 
 	// Parse arguments
 	flag.Parse()
-	//tx_list := convert_arg(*TX)
 	tx_list := convert_arg(flag.Args()[0])
 	tx_band := convert_arg(*TX_band)
 	rx_list := convert_arg(*RX)
@@ -177,11 +175,6 @@ func Calculate(TX []float32, TX_band []float32) (im_results, im_results) {
 			}
 		}
 	}
-	// fmt.Println(IM3)
-	// fmt.Println(IM3_band)
-	// fmt.Println(IM5)
-	// fmt.Println(IM5_band)
-
 	// clean the duplicates
 	IM3 = remove_duplicates(IM3)
 	IM5 = remove_duplicates(IM5)
@@ -202,9 +195,6 @@ func Calculate(TX []float32, TX_band []float32) (im_results, im_results) {
 			IM5_full = append(IM5_full, im_tmp...)
 		}
 	}
-	// fmt.Println(IM3_full)
-	// fmt.Println(IM5_full)
-
 	return im_results{IM3, IM3_full}, im_results{IM5, IM5_full}
 }
 
@@ -237,6 +227,7 @@ func CheckRX(rx []float32, rx_band []float32, im_full [][]float32) [][]float32 {
 }
 
 func PIM_Calculator() {
+	// exported wrapper: go/PIM_Calculator.go calls PIM_Calculator.PIM_Calculator()
 	main()
 }
 
@@ -244,7 +235,6 @@ func main() {
 	print_div("-", 80)
 	fmt.Println("|\tThis is PIM Calculator")
 	print_div("-", 80)
-	// args := os.Args[1:]
 	args_TX, args_RX, out_file := read_args()
 
 	im3, im5 := Calculate(args_TX.freq, args_TX.band)

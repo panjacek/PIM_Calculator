@@ -135,5 +135,5 @@ clean: ## Remove build and cache artifacts
 	$(MAKE) -C python clean
 	$(MAKE) -C go clean
 	$(MAKE) -C mojo clean
-	rm -rf dist .pytest_cache .ruff_cache .coverage
+	rm -rf dist .pytest_cache .ruff_cache .mypy_cache .coverage
 	rm -rf tests/__pycache__ web/__pycache__ __pycache__

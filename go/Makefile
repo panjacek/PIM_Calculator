@@ -35,5 +35,5 @@ run-cli: build
 
 clean:
 	rm -f $(BIN)
-	rm -f pim_calc
+	rm -f go
 

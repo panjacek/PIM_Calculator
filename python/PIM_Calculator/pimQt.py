@@ -42,7 +42,7 @@ except ImportError as exc:
     sys.exit(f"PIM_GUI_Calculator needs the gui extra (matplotlib/scipy): {exc}")
 
 
-VERSION = "0.2"
+VERSION = "0.4.0"
 
 
 # TODO: add slots and signals
@@ -104,11 +104,9 @@ class PIMCanvas(FigureCanvas):
             [0.2, 0.5, 0.9, 0.99, 1, 1, 1, 1, 1, 1, 1, 0.99, 0.9, 0.5, 0.2]
         )
         # plot RX vs IM
-        # if isinstance(data[0], tuple):
         if "RX" in plot_name:
             rx_present = []
             for rx, im_hits, im_src in data:
-                # x = np.arange(im_hits[0], im_hits[1])
                 x = np.linspace(im_hits[0], im_hits[1], num=15)
                 x_cf = im_hits[0] + (im_hits[1] - im_hits[0]) / 2
 
@@ -122,7 +120,6 @@ class PIMCanvas(FigureCanvas):
 
                 rx_cf = rx[0] + (rx[1] - rx[0]) / 2
                 if rx_cf not in rx_present:
-                    # rx = np.arange(rx[0], rx[1])
                     rx = np.linspace(rx[0] - 0.1, rx[1] + 0.1, num=15)
 
                     # make pseudo PIM shape with edges lower than middle
@@ -138,9 +135,6 @@ class PIMCanvas(FigureCanvas):
             return
 
         # Plot IM items
-        # data = [np.arange(x[0], x[1]) for x in data]
-        # data = [np.arange(x[0], x[1]) for x in data]
-        # y = [np.ones(len(x)) for x in data]
         for pim in data:
             x = np.linspace(pim[0], pim[1], num=15, endpoint=True)
             x_cf = pim[0] + (pim[1] - pim[0]) / 2
@@ -150,20 +144,8 @@ class PIMCanvas(FigureCanvas):
             y = interp1d(x, y, kind="cubic")(x2)
 
             self.axes.plot(x2, y, label=f"IM Cf={x_cf}", alpha=0.60, lw="3")
-            """self.axes.bar(x, y,
-                          label="Cf={0}".format(x[0]+(x[-1]-x[0])/2),
-                          alpha=0.60,
-                          lw="3")
-            """
-            # self.axes.plot(x, y, alpha=0.8, lw="3")
-        # self.xticks(a + 0.4, a)
         self.axes.legend()
         self.draw()
-
-
-class PIMPlot(QtWidgets.QWidget):
-    def __init__(self, item: Any) -> None:
-        QtWidgets.QWidget.__init__(self)
 
 
 class ScrollMessageBox(QtWidgets.QMessageBox):
@@ -194,7 +176,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self) -> None:
         QtWidgets.QMainWindow.__init__(self)
-        # super(MainWindow, self).__init__()
         # elements
         self.labels: list[QtWidgets.QLabel] = []
         self.fields: list[QtWidgets.QLineEdit] = []
@@ -233,9 +214,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.chk_box.append(QtWidgets.QCheckBox("Plot Results"))
         self.chk_box[-1].setChecked(False)
         self.chk_box.append(QtWidgets.QCheckBox("Plot IM Separately"))
-        self.chk_box[-1].setChecked(False)
-        # TODO: wire checkbox to plot source annotation (rendered but never read)
-        self.chk_box.append(QtWidgets.QCheckBox("Show IM source"))
         self.chk_box[-1].setChecked(False)
         calculate_btn = QtWidgets.QPushButton("Calculate", self)
         calculate_btn.setToolTip("<b>Click to calculate</b>")
@@ -281,7 +259,6 @@ class MainWindow(QtWidgets.QMainWindow):
         grid.addWidget(calculate_btn, 1, 4)
         grid.addWidget(self.chk_box[0], 2, 4)
         grid.addWidget(self.chk_box[1], 3, 4)
-        grid.addWidget(self.chk_box[2], 4, 4)
 
         screen = self.screen().availableGeometry()
         self.resize(400, 150)
@@ -312,11 +289,9 @@ class MainWindow(QtWidgets.QMainWindow):
         im_data: list[tuple[str, FloatArray]],
         rx_data: list[tuple[str, list[ImHit]]],
     ) -> None:
-        # box = QtWidgets.QMessageBox()
         items: list[Any] = []
         text_obj = QtWidgets.QTextBrowser(self)
         text_obj.setText(results)
-        # items.append(text_obj)
         if plt and plot_results:
             if plot_im:
                 for im, im_full in im_data:
@@ -348,10 +323,16 @@ class MainWindow(QtWidgets.QMainWindow):
     def on_calculate_click(self) -> None:
         """Method to call on calculate click"""
 
-        tx_list = self._convert_list(self.fields[0].text())
-        tx_bandwith = self._convert_list(self.fields[1].text())
-        rx_list = self._convert_list(self.fields[2].text())
-        rx_bandwith = self._convert_list(self.fields[3].text())
+        try:
+            tx_list = self._convert_list(self.fields[0].text())
+            tx_bandwith = self._convert_list(self.fields[1].text())
+            rx_list = self._convert_list(self.fields[2].text())
+            rx_bandwith = self._convert_list(self.fields[3].text())
+        except ValueError as exc:
+            QtWidgets.QMessageBox.warning(
+                self, "Invalid input", f"Bad frequency list: {exc}"
+            )
+            return
 
         plot_results = self.chk_box[0].isChecked()
         plot_im = self.chk_box[1].isChecked()
@@ -362,41 +343,6 @@ class MainWindow(QtWidgets.QMainWindow):
             tx_list, tx_bandwith, rx_list, rx_bandwith
         )
 
-        """
-        im_result = pimc.calculate(tx_list, tx_bandwith=tx_size)
-        text_result = []
-        im_name = cycle(["IM3", "IM5"]).next
-        rx_result = []
-        for im, im_full in im_result:
-            name = im_name()
-            pimc.logger.info(48*"=")
-            pimc.logger.info(im)
-            pimc.logger.info("==== {0}:fmin, fmax ====".format(name))
-            pimc.logger.info(im_full)
-            pimc.logger.info(48*"=")
-            text_result.append(48*"=")
-            text_result.append("==== {0} ====".format(name))
-            text_result.append(str(im))
-            text_result.append("==== {0}:fmin, fmax ====".format(name))
-            text_result.append(str(im_full))
-            text_result.append(48*"=")
-            if rx_list is not None:
-                pimc.logger.info("==== RX check ===")
-                im_hits = pimc.check_rx(rx_list, im_full, rx_bandwith=rx_size)
-                if len(im_hits) > 0:
-                    pimc.logger.warning("yey, we've got some {0} PIM".format(name))
-                rx_result.append((name, im_hits))
-                text_result.append(48*"=")
-                pimc.logger.info(48*"=")
-
-        for rx_res in rx_result:
-            im_type = rx_res[0]
-            pimc.logger.warning("===== {0} =====".format(im_type))
-            text_result.append("===== {0} =====".format(im_type))
-            for pim in rx_res[1]:
-                pimc.logger.warning("{0} is inside: {1}".format(pim[0], pim[1]))
-                text_result.append("{0} is inside: {1}".format(pim[0], pim[1]))
-        """
         text_out = "\n".join(text_result)
         self.show_results(
             text_out, plot_results, plot_im, im_data=im_result, rx_data=rx_result
@@ -408,7 +354,7 @@ class MainWindow(QtWidgets.QMainWindow):
             "About",
             f"""PIM Calculator
 This program is a simple GUI for Passive InterModulation Calculation.
-versio={VERSION}
+version={VERSION}
 """,
         )
 
