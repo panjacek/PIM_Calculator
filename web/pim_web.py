@@ -8,7 +8,8 @@ with the same command lines used by tests/test_integration.py
 (mojo = pure native cli.mojo port, mojo_py = CPython-interop wrapper).
 
 RX-hit checking is reimplemented here as simple interval overlap because
-the shared JSON contract does not yet carry rx_hits (see plan TODO).
+the shared JSON contract does not yet carry rx_hits
+(docs/plans/2026-09-28_plan_portfolio-followup.md).
 """
 
 from __future__ import annotations

@@ -21,6 +21,8 @@ ENV/
 # Testing & coverage
 .pytest_cache/
 .benchmarks/
+.mypy_cache/
+.ruff_cache/
 .coverage
 .coverage.*
 coverage.out
@@ -29,13 +31,13 @@ htmlcov/
 .cache/
 .tox/
 
-# Compiled CLI binary (go flavour)
-go/pim_calc
-
 # IDE and OS files
 .DS_Store
 .vscode/
 .idea/
+
+# go build output from plain `go build ./...` inside go/
+go/go
 
 # Local planning notes (not part of the repo)
 docs/plans/

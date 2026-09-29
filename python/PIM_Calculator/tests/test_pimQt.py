@@ -36,7 +36,7 @@ class TestpimQt:
         assert len(window.fields) == 4
 
         # check boxes
-        assert len(window.chk_box) == 3
+        assert len(window.chk_box) == 2
         assert window.chk_box[0].isChecked() is False
         assert window.chk_box[1].isChecked() is False
 
@@ -66,3 +66,69 @@ class TestpimQt:
         for wind in main_window.windows:
             cast(MagicMock, wind.close).assert_called_once_with()
         exit.assert_called_once_with()
+
+
+@pytest.fixture
+def real_window(qtbot: Any, xvfb: Any) -> MainWindow:
+    window = MainWindow()
+    qtbot.addWidget(window)
+    window.fields[0].setText("2152,1932")
+    window.fields[1].setText("5,5")
+    window.fields[2].setText("1752,1900")
+    window.fields[3].setText("5,5")
+    return window
+
+
+class TestCalculateClick:
+    def test_valid_input(
+        self, real_window: MainWindow, mocker: MockerFixture
+    ) -> None:
+        show = mocker.patch.object(real_window, "show_results")
+        real_window.on_calculate_click()
+
+        show.assert_called_once()
+        text_out = show.call_args.args[0]
+        assert "RX check" in text_out
+        im_data = show.call_args.kwargs["im_data"]
+        assert [name for name, _rows in im_data] == ["IM3", "IM5"]
+        assert all(len(rows) > 0 for _name, rows in im_data)
+
+    def test_garbage_input(
+        self, real_window: MainWindow, mocker: MockerFixture
+    ) -> None:
+        real_window.fields[0].setText("garbage")
+        warning = mocker.patch.object(pim_qt.QtWidgets.QMessageBox, "warning")
+        show = mocker.patch.object(real_window, "show_results")
+
+        real_window.on_calculate_click()
+
+        warning.assert_called_once()
+        show.assert_not_called()
+
+    def test_plot_results_toggle(
+        self, real_window: MainWindow, mocker: MockerFixture
+    ) -> None:
+        show = mocker.patch.object(real_window, "show_results")
+        box = real_window.chk_box[0]
+
+        box.setChecked(True)
+        real_window.on_calculate_click()
+        assert show.call_args.args[1] is True
+
+        box.setChecked(False)
+        real_window.on_calculate_click()
+        assert show.call_args.args[1] is False
+
+    def test_plot_im_separately_toggle(
+        self, real_window: MainWindow, mocker: MockerFixture
+    ) -> None:
+        show = mocker.patch.object(real_window, "show_results")
+        box = real_window.chk_box[1]
+
+        box.setChecked(True)
+        real_window.on_calculate_click()
+        assert show.call_args.args[2] is True
+
+        box.setChecked(False)
+        real_window.on_calculate_click()
+        assert show.call_args.args[2] is False

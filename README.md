@@ -203,6 +203,20 @@ make test-web                          # unit + playwright e2e (chromium lands i
 The python engine always works; go/mojo engines need their binary/toolchain
 and are shown with a hint (and skipped) when unavailable.
 
+## Docker (optional)
+
+Two images built from `python/Dockerfile` through `docker-compose.yml`
+(python flavour only):
+
+```bash
+docker compose build cli                                       # CLI image
+docker compose run --rm cli PIM_Calculator 2152,1932 -r 1752,1900
+docker compose up gui                                          # Qt GUI (X socket + /dev/dri)
+```
+
+The GUI container needs your X server exported and permitted:
+`export DISPLAY=:0 && xhost +local:docker` before `up gui`.
+
 ## Make targets
 
 Run `make help` for the full annotated list. The essentials:

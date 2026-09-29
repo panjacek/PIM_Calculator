@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
 import pprint
 import sys
 from collections.abc import Sequence
@@ -39,9 +38,6 @@ class PIMCalc:
         if self.logger is None:
             logging.basicConfig()
             self.logger = logging.getLogger(__name__)
-
-        if os.getenv("USE_MOJO") == "1":
-            self.logger.info("USE_MOJO=1 set: Running with Mojo acceleration engine")
 
     def get_im_full(self, cf: float, pim_size: float) -> list[float]:
         """Get full size if PIM"""
@@ -150,23 +146,6 @@ class PIMCalc:
         self.logger.debug("====")
         return input_arr
 
-    def _clean_arrays(
-        self, im: PimTable, im_full: FloatArray
-    ) -> tuple[PimTable, FloatArray]:
-        # logger.error(im)
-        im_full = im_full[im_full[:, 0].argsort()]
-        self.logger.debug(f"IM_FULL:{pprint.pformat(im_full)}")
-        self.logger.debug(im)
-        self.logger.debug(im["IM"])
-        im = np.unique(im, axis=0)
-        # im = im[im[:, 0].argsort()]
-        # im = np.array([x for x in im if len(x[1]) > 1])
-        im_full = np.unique(im_full, axis=0)
-        self.logger.debug("-----------------")
-        self.logger.debug(im)
-        self.logger.debug(f"IM_FULL:{pprint.pformat(im_full)}")
-        return im, im_full
-
     def check_rx(
         self,
         rx_list: Sequence[float],
@@ -220,7 +199,6 @@ class PIMCalc:
         tx_bandwith: Sequence[float],
         rx_list: Sequence[float] | None = None,
         rx_bandwith: Sequence[float] | None = None,
-        show_src: bool = True,
     ) -> tuple[list[str], list[tuple[str, FloatArray]], list[tuple[str, list[ImHit]]]]:
         """Wrapper to calculate PIM and check rx hits in one go
         Args:
@@ -300,8 +278,8 @@ def results_to_json(
     Shared output contract across the python/go/mojo flavours:
 
         {"tx_list": [...], "rx_list": [...],
-         "im3": [{"cf": .., "min": .., "max": ..}, ...],
-         "im5": [...]}
+         "IM3": [{"cf": .., "min": .., "max": ..}, ...],
+         "IM5": [...]}
 
     Args:
         im_result: tuple as returned by PIMCalc.calculate()
@@ -341,7 +319,7 @@ def read_args() -> dict[str, Any]:
 
     # read CLI args
     parser = argparse.ArgumentParser()
-    parser.add_argument("tx_list", help="List of TX Carriers", default="1980,1940")
+    parser.add_argument("tx_list", help="List of TX Carriers")
     parser.add_argument(
         "--tx_size", dest="tx_size", help="List of TX Carriers bands [5MHz]"
     )
@@ -361,7 +339,6 @@ def read_args() -> dict[str, Any]:
         default="INFO",
     )
 
-    # args, leftovers = parser.parse_known_args()
     args = parser.parse_args()
 
     tx_list: list[float] = _parse_freq_list(args.tx_list)
@@ -402,6 +379,8 @@ def main() -> None:
     console = logging.StreamHandler()
     console.setLevel(setup_dict["log_lvl"])
     logger = logging.getLogger(__name__)
+    if logger.handlers:
+        logger.handlers.clear()
     logger.addHandler(console)
     logger.setLevel("DEBUG")
 

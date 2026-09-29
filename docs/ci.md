@@ -155,5 +155,6 @@ make test-integration
   `coverage-python` artifact); go prints per-package `go test -cover`
   summaries. Mojo's TestSuite has no coverage tooling.
 - Go version comes from `go/go.mod` via `setup-go`.
-- GUI job installs the same X/GL system packages as `python/Dockerfile`
-  (gui stage), including `libegl1`/`libgl1` required by PySide6.
+- GUI job installs the X/GL system packages listed by the `gui` stage of
+  `python/Dockerfile` (same package list the docker image relies on,
+  including `libegl1`/`libgl1` required by PySide6).
