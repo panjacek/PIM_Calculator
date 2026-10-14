@@ -26,7 +26,6 @@ jobs:
         run: make lint-python
       - name: Lint shared tests (ruff, mypy)
         run: |
-          uv sync --group dev --group web
           make lint-tests
 
   python-unit:
@@ -47,6 +46,33 @@ jobs:
           name: coverage-python
           path: python/coverage.xml
           if-no-files-found: warn
+
+  # --- flavour: python across supported interpreters --------------
+  python-version-matrix:
+    name: python / unit tests (${{ matrix.python-version }})
+    needs: [python-lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14", "3.15"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Sync python env
+        env:
+          UV_PYTHON: ${{ matrix.python-version }}
+        run: uv sync --project python --group dev
+      - name: Pytest (unit, no coverage)
+        env:
+          UV_PYTHON: ${{ matrix.python-version }}
+        run: |
+          uv run --project python pytest -m "not benchmark" -p no:pytest-qt \
+            --ignore=python/PIM_Calculator/tests/test_pimQt.py \
+            python/PIM_Calculator/tests/test_pim_calc.py
 
   # --- flavour: go ---------------------------------------------------------
   go-lint:
@@ -91,7 +117,7 @@ jobs:
   # GUI tests are slow and X-dependent: only run once code is proven sound.
   python-gui:
     name: python / gui tests (xvfb)
-    needs: [python-lint, python-unit]
+    needs: [python-lint, python-unit, python-version-matrix]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -115,7 +141,7 @@ jobs:
   # and only after its own lint passes.
   mojo-test:
     name: mojo / unit tests
-    needs: [mojo-lint, python-lint, python-unit]
+    needs: [mojo-lint, python-lint, python-unit, python-version-matrix]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -134,6 +160,7 @@ jobs:
       - go-lint
       - go-test
       - mojo-test
+      - python-version-matrix
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -164,15 +191,16 @@ jobs:
       - go-lint
       - go-test
       - mojo-test
+      - python-version-matrix
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
       - name: Sync root env (+ web group)
-        run: uv sync --group dev --group web
+        run: UV_PYTHON=3.14.8 uv sync --python 3.14.8 --group dev --group web
       - name: Install chromium
-        run: uv run --group dev --group web playwright install --with-deps chromium
+        run: UV_PYTHON=3.14.8 uv run --python 3.14.8 --group dev --group web playwright install --with-deps chromium
       - name: Build go CLI
         run: make build-go
       - name: Web UI unit + e2e tests
