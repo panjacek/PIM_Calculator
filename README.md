@@ -8,9 +8,9 @@ cross-flavour integration test in CI.
 
 [![CI](https://github.com/panjacek/PIM_Calculator/actions/workflows/ci.yml/badge.svg)](https://github.com/panjacek/PIM_Calculator/actions/workflows/ci.yml)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](LICENSE)
-[![python-3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB.svg)](python/pyproject.toml)
-[![go-1.25](https://img.shields.io/badge/go-1.25-00ADD8.svg)](go/go.mod)
-[![mojo-1.0](https://img.shields.io/badge/mojo-1.0-FFCF00.svg)](pyproject.toml)
+[![python-3.13+](https://img.shields.io/badge/python-3.13%2B-3776AB.svg)](python/pyproject.toml)
+[![go-1.27](https://img.shields.io/badge/go-1.27-00ADD8.svg)](go/go.mod)
+[![mojo-1.2](https://img.shields.io/badge/mojo-1.2-FFCF00.svg)](pyproject.toml)
 
 ## What is PIM?
 
@@ -26,8 +26,8 @@ pick whichever fits your environment; you do **not** need all of them.
 
 | flavour | directory | description | requires |
 | ------- | --------- | ----------- | -------- |
-| Python  | `python/` | Reference implementation: PIMCalc class, CLI, Qt GUI, pytest suite | [uv](https://docs.astral.sh/uv/) only (Python >= 3.12) |
-| Go      | `go/`     | Standalone CLI port, no external dependencies | Go >= 1.25 |
+| Python  | `python/` | Reference implementation: PIMCalc class, CLI, Qt GUI, pytest suite | [uv](https://docs.astral.sh/uv/) only (Python >= 3.13) |
+| Go      | `go/`     | Standalone CLI port, no external dependencies | Go >= 1.27 |
 | Mojo    | `mojo/`   | Pure native port plus a wrapper around the Python library via CPython interop | [uv](https://docs.astral.sh/uv/) only (Mojo toolchain comes with the root dev env) |
 
 CI keeps all flavours in lockstep via a cross-flavour integration test, but
@@ -93,7 +93,7 @@ Go flavour (only if you want it):
 make run-go-cli CALC_ARGS="-rx_list 1752,1900 -rx_band 5,5 -tx_band 5,5 2152,1932"   # builds dist/pim_calc-go first
 ```
 
-Notes: Python >= 3.14 is pinned via `.python-version` and fetched
+Notes: Python 3.15 is pinned via `.python-version` and fetched
 automatically by uv. `make test` / `make lint` / `make test-integration`
 span every flavour and therefore need all toolchains installed.
 
@@ -270,7 +270,7 @@ uv sync --group dev --group web
 ```
 
 Mojo toolchain: https://mojolang.org/install/ (installed as the pinned
-`mojo==1.0.0` dependency of the root project).
+`mojo==1.2.0` dependency of the root project).
 
 ## Documentation
 

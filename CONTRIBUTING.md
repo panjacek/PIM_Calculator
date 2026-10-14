@@ -1,29 +1,58 @@
 # Contributing
 
-## Development environment
+## Setup
 
-1. Install [uv](https://docs.astral.sh/uv/).
-2. Sync the root environment (includes Mojo toolchain, editable `pim-calculator`, and web dependencies):
-   ```bash
-   uv sync --group dev --group web
-   ```
-3. Sync the Python package environment (includes GUI extras):
-   ```bash
-   uv sync --project python --group dev --extra gui
-   ```
+Needs [uv](https://docs.astral.sh/uv/) and Go 1.25+ (`~/.local/go/bin` if
+installed by hand). Mojo comes from the pinned `mojo` dependency.
 
-## Common Make targets
+```bash
+uv sync --group dev --group web   # dev + streamlit deps
+make build-go                     # dist/pim_calc-go
+```
 
-Run `make help` for the full list, or see `README.md` ("Make targets") and `docs/ci.md`:
+Qt GUI needs extra system libs; see the `ImportError` message in
+`python/PIM_Calculator/pimQt.py` for the exact apt list.
 
-- `make lint` — run linters across Python (`ruff`, `mypy`, `bandit`), Go (`go vet`), and Mojo (`mblack`).
-- `make test-python-unit` — run Python unit tests.
-- `make test-python-gui` — run Qt GUI tests (requires a display or `xvfb-run`).
-- `make test-go` — run Go tests and benchmarks.
-- `make test-mojo` — run Mojo pure and CPython-interop tests.
-- `make test-integration` — run cross-flavour CLI integration tests.
-- `make test-web` — run Streamlit unit and Playwright E2E tests.
+## Before sending a change
 
-## Flavour-parity rule
+```bash
+make lint            # ruff + mypy + bandit (python/tests), go vet, mblack
+make test-unit       # python + go + mojo unit suites
+make test-integration
+make test-python-gui # needs a display or Xvfb
+```
 
-All CLI flavours (`python/`, `go/`, `mojo/` pure and interop) share the same `--output_file` JSON contract documented in `docs/json-contract.md`. Any change to CLI flags, JSON output fields, or core PIM calculation behaviour must be reflected across all flavours and verified with `make test-integration`.
+`make help` lists every target; `README.md` describes each one and
+`docs/ci.md` explains what CI runs.
+
+## Flavour parity rule
+
+The repo ships the same calculator four ways:
+
+| flavour | code |
+|---|---|
+| python | `python/PIM_Calculator/` |
+| go | `go/PIM_Calculator/` |
+| mojo pure | `mojo/pim_calc.mojo`, `mojo/cli.mojo` |
+| mojo interop | `mojo/*_py.mojo` |
+
+Any change to the maths, CLI flags, or JSON output must land in all flavours
+in the same PR, or be documented as a known divergence in
+`docs/json-contract.md`. `tests/test_integration.py` is the guardrail: it
+runs all CLIs on the same inputs and asserts agreement.
+
+Known go divergences (float32, CF-only dedupe, default RX list, panics on bad
+input) are intentional and documented, not bugs. Do not "fix" them without
+a separate decision.
+
+## Style
+
+- Python: `ruff format` + `ruff check`, full type annotations on public API.
+- Go: default `gofmt`.
+- Mojo: `mblack`.
+- No dead code, no commented-out blocks.
+
+## Versioning
+
+`VERSION` at the root is the single source of truth; manifests must match it.
+Release notes live in the annotated `vX.Y.Z` tag message, not a changelog file.
