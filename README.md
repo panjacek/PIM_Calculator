@@ -91,7 +91,7 @@ Go flavour (only if you want it):
 make run-go-cli CALC_ARGS="-rx_list 1752,1900 -rx_band 5,5 -tx_band 5,5 2152,1932"   # builds dist/pim_calc-go first
 ```
 
-Notes: Python >= 3.14 is pinned via `.python-version` and fetched
+Notes: Python 3.15 is pinned via `.python-version` and fetched
 automatically by uv. `make test` / `make lint` / `make test-integration`
 span every flavour and therefore need all toolchains installed.
 
@@ -251,7 +251,7 @@ uv sync --group dev --group web
 ```
 
 Mojo toolchain: https://mojolang.org/install/ (installed as the pinned
-`mojo==1.0.0` dependency of the root project).
+`mojo==1.1.0` dependency of the root project).
 
 ## Documentation
 
