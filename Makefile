@@ -45,7 +45,7 @@ lint-mojo: ## mblack on mojo/
 
 lint-tests: ## Ruff + mypy on tests/ and web/
 	uv run ruff check tests web
-	uv run --group dev --group web mypy tests web
+	UV_PROJECT_ENVIRONMENT=.venv-web UV_PYTHON=3.14.8 uv run --python 3.14.8 --group dev --group web mypy tests web
 
 ######### FORMAT #########
 
@@ -120,14 +120,14 @@ run-mojo-py-cli: ## Run the mojo wrapper CLI (python interop): CALC_ARGS="2152,1
 	$(MAKE) -C mojo run-mojo-py-cli CALC_ARGS="$(CALC_ARGS)"
 
 run-web: ## Launch streamlit web UI
-	uv run --group dev --group web streamlit run web/app.py
+	UV_PROJECT_ENVIRONMENT=.venv-web UV_PYTHON=3.14.8 uv run --python 3.14.8 --group dev --group web streamlit run web/app.py
 
 test-web: setup-web ## Web UI unit + playwright e2e tests
-	uv run --group dev --group web pytest tests/test_pim_web.py tests/test_pim_web_e2e.py
+	UV_PROJECT_ENVIRONMENT=.venv-web UV_PYTHON=3.14.8 uv run --python 3.14.8 --group dev --group web pytest tests/test_pim_web.py tests/test_pim_web_e2e.py
 
 setup-web: ## One-time web deps: env sync + chromium into ~/.cache (no sudo)
-	uv sync --group dev --group web
-	uv run --group dev --group web playwright install chromium
+	UV_PROJECT_ENVIRONMENT=.venv-web UV_PYTHON=3.14.8 uv sync --python 3.14.8 --group dev --group web
+	UV_PROJECT_ENVIRONMENT=.venv-web UV_PYTHON=3.14.8 uv run --python 3.14.8 --group dev --group web playwright install chromium
 
 ######### CLEAN #########
 
