@@ -6,16 +6,18 @@ Status: **thinking document, no tooling implemented yet.**
 
 | Flavour | Where version lives        | Current value |
 |---------|----------------------------|---------------|
-| python  | `python/pyproject.toml`    | `0.2`         |
+| repo    | root `VERSION`             | `0.4.0`       |
+| python  | `python/pyproject.toml`    | `0.4.0`       |
+| qt gui  | `python/PIM_Calculator/pimQt.py` | `0.4.0` |
 | go      | nothing                    | —             |
-| mojo    | root `pyproject.toml`¹     | `0.2`         |
-| repo    | git tags                   | none          |
+| mojo    | root `pyproject.toml`¹     | `0.4.0`       |
+| tags    | git tags                   | none          |
 
 ¹ Root manifest is the dev environment for the mojo wrapper, not really a
 product version.
 
-None of these are proper semver (`X.Y.Z`) yet, and the two `0.2` values are
-independent numbers that happen to match.
+All versioned files are aligned to `0.4.0`, with root `VERSION` as the
+single source of truth.
 
 ## Questions to answer before implementing
 

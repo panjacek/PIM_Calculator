@@ -184,3 +184,25 @@ def test_main_cli_writes_output_file(
     payload = json.loads(out_file.read_text())
     assert set(payload) == {"tx_list", "rx_list", "IM3", "IM5"}
     assert payload["rx_list"] == [1752.0, 1900.0]
+
+
+def test_main_bad_float_exits_nonzero() -> None:
+    for bad in (
+        ["pim_calc.py", "notanum"],
+        ["pim_calc.py", "2152,1932", "--rx_list=abc"],
+    ):
+        sys.argv = bad
+        with pytest.raises(SystemExit) as excinfo:
+            main()
+        assert excinfo.value.code == 1
+
+
+def test_main_unwritable_output_exits_nonzero(tmp_path: Path) -> None:
+    sys.argv = [
+        "pim_calc.py",
+        "2152,1932",
+        f"--output_file={tmp_path / 'no_dir' / 'x.json'}",
+    ]
+    with pytest.raises(SystemExit) as excinfo:
+        main()
+    assert excinfo.value.code == 1

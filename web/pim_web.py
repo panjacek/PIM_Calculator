@@ -2,14 +2,15 @@
 
 Pure logic, no streamlit imports, so unit tests stay headless and fast.
 Every engine (python/go/mojo/mojo_py) is driven through the shared JSON
-contract (see python/PIM_Calculator/pim_calc.py::results_to_json):
+contract (docs/json-contract.md, produced by
+python/PIM_Calculator/pim_calc.py::results_to_json):
 python runs in-process, the others via their CLIs writing to a temp file
 with the same command lines used by tests/test_integration.py
 (mojo = pure native cli.mojo port, mojo_py = CPython-interop wrapper).
 
 RX-hit checking is reimplemented here as simple interval overlap because
-the shared JSON contract does not yet carry rx_hits
-(docs/plans/2026-09-28_plan_portfolio-followup.md).
+the shared JSON contract does not yet carry rx_hits (see
+docs/json-contract.md).
 """
 
 from __future__ import annotations

@@ -80,9 +80,7 @@ def real_window(qtbot: Any, xvfb: Any) -> MainWindow:
 
 
 class TestCalculateClick:
-    def test_valid_input(
-        self, real_window: MainWindow, mocker: MockerFixture
-    ) -> None:
+    def test_valid_input(self, real_window: MainWindow, mocker: MockerFixture) -> None:
         show = mocker.patch.object(real_window, "show_results")
         real_window.on_calculate_click()
 

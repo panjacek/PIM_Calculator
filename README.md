@@ -41,12 +41,14 @@ means you skip the `go/` flavour and its make targets.
   your environment already has. Python is the reference, Go is a standalone
   binary with zero deps, Mojo compiles to a native binary.
 - **Shared JSON contract.** Every flavour serialises results to the same
-  JSON shape (`tx_list`, `rx_list`, `IM3`, `IM5` rows of `cf`/`min`/`max`).
+  JSON shape (`tx_list`, `rx_list`, `IM3`, `IM5` rows of `cf`/`min`/`max`,
+  see [`docs/json-contract.md`](docs/json-contract.md)).
   It is the language-agnostic seam: the web UI drives all four engines
   (python, go, mojo, mojo_py) through it without knowing any of their code.
 - **Cross-flavour integration test as drift guard.** CI runs all four CLIs
-  on one canonical case and fails if centres, row values or row counts
-  disagree. Port changes cannot silently diverge.
+  on four cases (canonical, single TX, no RX, n=3 TX) and fails if
+  centres, row values or row counts disagree. Port changes cannot
+  silently diverge.
 - **Mojo twice over.** `mojo/` holds a pure native port (fast, no python at
   runtime) and a CPython-interop wrapper around the python library, proving
   the same logic works natively and through interop.
@@ -140,6 +142,23 @@ JSON output (identical schema in all flavours), for the case
 
 IM5 is truncated above: this case really emits 10 IM5 rows, duplicates stay
 in when the same centre frequency comes from different TX source pairs.
+
+Full schema, producers/consumers and known flavour divergences:
+[`docs/json-contract.md`](docs/json-contract.md).
+
+### Bad input behaviour
+
+| failure | python | go | mojo (both CLIs) |
+| --- | --- | --- | --- |
+| non-numeric frequency (`notanum`) | `Invalid CLI argument: ...`, exit 1 | panic, exit 2 | runtime error, exit 1 |
+| missing `tx_list` | argparse usage, exit 2 | panic, exit 2 | usage text, exit 0 |
+| unparsable value inside `-rx_list` | `Invalid CLI argument: ...`, exit 1 | value dropped; panics (exit 2) if surviving RX count exceeds `-rx_band` length | runtime error, exit 1 |
+| unwritable `--output_file` | `Calculation failed: ...`, exit 1 | error logged, exit 0 | runtime error, exit 1 |
+
+Go quirks beyond this table (float32 rounding, dedupe by centre frequency,
+default `rx_list=[1900]`, single-TX self-product) are documented in
+[`docs/json-contract.md`](docs/json-contract.md); they are asserted as
+known behaviour in `tests/test_integration.py`.
 
 ## Example output
 
@@ -257,6 +276,8 @@ Mojo toolchain: https://mojolang.org/install/ (installed as the pinned
 
 - [`docs/pim.md`](docs/pim.md) - what PIM is, which products are computed,
   how RX hit checks work
+- [`docs/json-contract.md`](docs/json-contract.md) - `--output_file` schema,
+  producers/consumers, known flavour divergences
 - [`docs/ci.md`](docs/ci.md) - CI pipeline: job graph, integration test case,
   local reproduction
 - [`docs/versioning.md`](docs/versioning.md) - semver strategy exploration

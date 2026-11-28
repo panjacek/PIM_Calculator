@@ -275,7 +275,8 @@ def results_to_json(
 ) -> str:
     """Serialize PIM calculation results to a JSON string.
 
-    Shared output contract across the python/go/mojo flavours:
+    Shared output contract across the python/go/mojo flavours
+    (full schema and known divergences: docs/json-contract.md):
 
         {"tx_list": [...], "rx_list": [...],
          "IM3": [{"cf": .., "min": .., "max": ..}, ...],
@@ -373,7 +374,12 @@ def read_args() -> dict[str, Any]:
 
 
 def main() -> None:
-    setup_dict = read_args()
+    try:
+        setup_dict = read_args()
+    except (ValueError, TypeError) as exc:
+        logging.basicConfig()
+        logging.getLogger(__name__).error(f"Invalid CLI argument: {exc}")
+        sys.exit(1)
 
     # setup logger
     console = logging.StreamHandler()
@@ -397,16 +403,20 @@ def main() -> None:
     logger.info(f"Using RX Carriers:{rx_list}")
     logger.info(f"Using RX Bandwidths:{rx_size}")
 
-    _text_result, _pim_result, _rx_result = pimc.get_results(
-        tx_list, tx_size, rx_list, rx_size
-    )
+    try:
+        _text_result, _pim_result, _rx_result = pimc.get_results(
+            tx_list, tx_size, rx_list, rx_size
+        )
 
-    if setup_dict["output_file"]:
-        with open(setup_dict["output_file"], "w") as fh:
-            fh.write(
-                results_to_json(pimc.calculate(tx_list, tx_size), tx_list, rx_list)
-                + "\n"
-            )
+        if setup_dict["output_file"]:
+            with open(setup_dict["output_file"], "w") as fh:
+                fh.write(
+                    results_to_json(pimc.calculate(tx_list, tx_size), tx_list, rx_list)
+                    + "\n"
+                )
+    except (OSError, TypeError, ValueError) as exc:
+        logger.error(f"Calculation failed: {exc}")
+        sys.exit(1)
 
     sys.exit(0)
 
