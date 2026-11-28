@@ -7,7 +7,7 @@ BIN := $(DIST)/pim_calc-go
 all: build
 
 test:
-	go test -v -coverpkg=./... -coverprofile=coverage.out ./...
+	go test -v -coverpkg=./... -coverprofile=coverage.out -bench . -benchmem ./...
 	@go tool cover -func=coverage.out | tail -1
 
 lint:

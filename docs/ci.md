@@ -15,7 +15,7 @@ flowchart LR
     gt["go-test"]
     ml["mojo-lint<br/>(mblack)"]
     mt["mojo-test<br/>(pure + interop)"]
-    ig["integration<br/>(4 CLIs, one case)"]
+    ig["integration<br/>(4 CLIs, 4 cases)"]
     we["web-e2e<br/>(playwright)"]
     bn["binaries<br/>(go + mojo CLIs)"]
 
@@ -39,7 +39,7 @@ flowchart LR
 
 - `python-lint`, `python-unit`, `go-lint`, `go-test`, `mojo-lint` start
   immediately and run in parallel.
-- `mojo-lint` feeds `mojo-unit`: unit tests only run on lint-clean mojo code.
+- `mojo-lint` feeds `mojo-test`: unit tests only run on lint-clean mojo code.
   `mojo-test` additionally waits for the python flavour to be lint-clean and
   unit-green first (mojo wraps the python library).
 - `python-gui` waits for the python flavour too (GUI tests are slow).
@@ -74,14 +74,18 @@ flowchart LR
 
 ### Integration job
 
-Runs all three CLIs on one canonical case:
+Runs all four CLIs on four cases:
 
 ```
-TX = 2152,1932   RX = 1752,1900   bands default (5 MHz)
+canonical   TX = 2152,1932        RX = 1752,1900
+single TX   TX = 1900             RX = 1752,1900
+no RX       TX = 2152,1932        no rx flag
+n=3 TX      TX = 2152,1932,1980   RX = 1752,1900
+bands default (5 MHz)
 ```
 
 Each CLI writes its results via `--output_file` as JSON (shared schema,
-see `python/PIM_Calculator/pim_calc.py::results_to_json`):
+see `docs/json-contract.md`):
 
 ```json
 {
@@ -92,12 +96,18 @@ see `python/PIM_Calculator/pim_calc.py::results_to_json`):
 }
 ```
 
-The test (`tests/test_integration.py`, plain pytest) then asserts:
+The tests (`tests/test_integration.py`, plain pytest) assert:
 
-1. each flavour's IM centre-frequency set equals the known truth for this
-   case: `{1492, 1712, 1932, 2152, 2372, 2592}` MHz
-   (IM3 set plus IM5-only values), and
-2. all three flavours agree with each other.
+1. canonical: each flavour's IM centre-frequency set equals the known
+   truth `{1492, 1712, 1932, 2152, 2372, 2592}` MHz, all four flavours
+   agree, `(cf, min, max)` row sets match, row counts match known
+   per-flavour dedupe semantics (python/mojo 4/10, go 4/6),
+2. echo: `tx_list`/`rx_list` in the payload round-trip the inputs,
+3. no-RX case: python/mojo echo `[]`, go injects `[1900]` (known),
+   centre frequencies still agree,
+4. n=3 case: 27 centres and row sets agree everywhere, counts differ
+   only by go dedupe (15/57 vs 12/27), and
+5. single-TX case: go emits one self-product, python/mojo none (known).
 
 This catches missing values *and* spurious extras — any computation drift
 between flavours fails with the exact diff.

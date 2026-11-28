@@ -383,7 +383,7 @@ def results_to_json(
     tx_list: List[Float64],
     rx_list: List[Float64],
 ) -> String:
-    """Shared JSON contract across flavours:
+    """Shared JSON contract across flavours (docs/json-contract.md):
 
         {"tx_list": [...], "rx_list": [...],
          "IM3": [{"cf": .., "min": .., "max": ..}, ...], "IM5": [...]}
