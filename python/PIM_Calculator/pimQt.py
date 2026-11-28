@@ -42,7 +42,7 @@ except ImportError as exc:
     sys.exit(f"PIM_GUI_Calculator needs the gui extra (matplotlib/scipy): {exc}")
 
 
-VERSION = "0.4.0"
+VERSION = "0.4.1"
 
 
 # TODO: add slots and signals

@@ -24,7 +24,7 @@
 
 ## Notes
 
-- Default python: 3.14 (pinned via root `.python-version`, honoured by uv)
+- Default python: 3.15.0 (pinned via root `.python-version`, honoured by uv)
 - Mojo toolchain: install via `uv pip install mojo` (https://mojolang.org/install/), version pinned in pyproject.toml
 - Ruff: N999 ignored (module naming), E741 ignored (i,j,k,l,m carrier indices are domain convention)
 - Python lint stack: ruff + mypy + bandit (`make lint-python`, `make lint-tests`); mypy config in both pyprojects, PySide6/scipy/qt backends stubs via overrides

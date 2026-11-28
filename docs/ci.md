@@ -9,6 +9,7 @@ Single workflow: `.github/workflows/ci.yml`. Triggers: push to `main`, PRs to
 flowchart LR
     pl["python-lint<br/>(ruff + mypy + bandit)"]
     pu["python-unit<br/>(pytest)"]
+    pvm["python-version-matrix<br/>(py 3.13-3.15)"]
     pg["python-gui<br/>(xvfb, PySide6)"]
     pp["python-perf<br/>(benchmarks)"]
     gl["go-lint<br/>(go vet)"]
@@ -19,30 +20,39 @@ flowchart LR
     we["web-e2e<br/>(playwright)"]
     bn["binaries<br/>(go + mojo CLIs)"]
 
+    pl --> pvm
     pl --> pg
     pu --> pg
+    pvm --> pg
     pl --> pp
     pu --> pp
     ml --> mt
     pl --> mt
     pu --> mt
+    pvm --> mt
     pg --> ig
     gl --> ig
     gt --> ig
     mt --> ig
+    pvm --> ig
     ig --> bn
     pg --> we
     gl --> we
     gt --> we
     mt --> we
+    pvm --> we
 ```
 
 - `python-lint`, `python-unit`, `go-lint`, `go-test`, `mojo-lint` start
   immediately and run in parallel.
+- `python-version-matrix` re-runs the python unit suite on 3.13/3.14/3.15
+  (compatibility guard); gated on `python-lint`.
 - `mojo-lint` feeds `mojo-test`: unit tests only run on lint-clean mojo code.
   `mojo-test` additionally waits for the python flavour to be lint-clean and
-  unit-green first (mojo wraps the python library).
-- `python-gui` waits for the python flavour too (GUI tests are slow).
+  unit-green (incl. the version matrix) first (mojo wraps the python
+  library).
+- `python-gui` waits for the python flavour and the version matrix too
+  (GUI tests are slow).
 - `python-perf` runs parallel to the other flavours: benchmarks only need the
   python lib, no timing gates. Gated on `python-lint` + `python-unit`.
 - `web-e2e` runs parallel to `integration`: same gate (all flavour lints+units
@@ -61,6 +71,7 @@ flowchart LR
 | Job         | What it does                                              |
 |-------------|-----------------------------------------------------------|
 | python-lint | `make lint-python` (ruff+mypy+bandit) + `make lint-tests` (ruff+mypy) |
+| python-version-matrix | `make`-equivalent pytest unit run on Python 3.13–3.15 (compatibility guard) |
 | python-unit | `make test-python-unit` (pytest, GUI tests excluded)      |
 | python-gui  | `xvfb-run make test-python-gui` (PySide6 under Xvfb)      |
 | python-perf | `make test-perf` (pytest-benchmark; uploads SVG/JSON artifacts) |
@@ -156,9 +167,9 @@ make test-integration
 
 ## Environment notes
 
-- Python is pinned to **3.14** via root `.python-version`; uv honours it both
+- Python is pinned to **3.15.0** via root `.python-version`; uv honours it both
   locally and in CI (downloads a managed interpreter if the runner lacks one).
-- Root `pyproject.toml` pins the Mojo toolchain (`mojo==1.0.0`) and installs
+- Root `pyproject.toml` pins the Mojo toolchain (`mojo==1.2.0`) and installs
   `pim-calculator` editable from `python/` — this is what the mojo jobs use.
 - `python/` has its own lockfile; CI syncs it per job with uv caching.
 - Coverage: the python unit job emits `coverage.xml` (uploaded as the

@@ -1,22 +1,24 @@
 # Versioning (Semver) — Exploration
 
-Status: **thinking document, no tooling implemented yet.**
+Status: **implemented for `0.4.1`.** Root `VERSION` is the source of truth, all
+manifests aligned to it. No changelog file: release notes go in the annotated
+`vX.Y.Z` tag message. Tag `v0.4.1` pending (manual, on explicit instruction).
 
 ## Current state
 
 | Flavour | Where version lives        | Current value |
 |---------|----------------------------|---------------|
-| repo    | root `VERSION`             | `0.4.0`       |
-| python  | `python/pyproject.toml`    | `0.4.0`       |
-| qt gui  | `python/PIM_Calculator/pimQt.py` | `0.4.0` |
+| repo    | root `VERSION`             | `0.4.1`       |
+| python  | `python/pyproject.toml`    | `0.4.1`       |
+| qt gui  | `python/PIM_Calculator/pimQt.py` | `0.4.1` |
 | go      | nothing                    | —             |
-| mojo    | root `pyproject.toml`¹     | `0.4.0`       |
+| mojo    | root `pyproject.toml`¹     | `0.4.1`       |
 | tags    | git tags                   | none          |
 
 ¹ Root manifest is the dev environment for the mojo wrapper, not really a
 product version.
 
-All versioned files are aligned to `0.4.0`, with root `VERSION` as the
+All versioned files are aligned to `0.4.1`, with root `VERSION` as the
 single source of truth.
 
 ## Questions to answer before implementing
@@ -40,12 +42,12 @@ single source of truth.
    detects such drift.
 5. **Mojo split point:** mojo is planned to become a standalone app next to
    being a wrapper. That is the natural moment to give it its own version.
-6. **Automation:** manual `git tag vX.Y.Z` + `CHANGELOG.md` entry vs
+6. **Automation:** manual `git tag vX.Y.Z` with release notes vs
    release-please / changesets. Manual first, automate when it hurts.
 7. **Pre-1.0 policy:** while in `0.x`, semver allows breaking changes in
    MINOR bumps (`0.3.0` may break `0.2.x`). Fine until the python API
    stabilises; going `1.0.0` is a promise, not a milestone party.
-8. **Changelog granularity:** single `CHANGELOG.md` with a "Flavours
+8. **Changelog granularity:** single annotated tag message with a "Flavours
    affected:" line per release keeps it KISS.
 
 ## Working recommendation (for future decision)
@@ -57,8 +59,8 @@ single source of truth.
   changes (any flavour breaking → MINOR bump while in 0.x).
 - Revisit per-flavour versioning when mojo goes standalone.
 
-## First concrete steps (when decided)
+## First concrete steps (done for `0.4.1`)
 
-1. Rename both manifests to real semver (`0.2.0`), add `VERSION` at root.
-2. Add `CHANGELOG.md` (Keep a Changelog format).
+1. Manifests use real semver (`0.4.1`), root `VERSION` added.
+2. Version bumped by hand in all three places + `uv lock`.
 3. Optional CI job later: verify `VERSION`, manifests and latest tag agree.
